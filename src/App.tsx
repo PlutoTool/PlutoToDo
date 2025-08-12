@@ -9,7 +9,7 @@ import { Modal } from './components/ui/Modal';
 import { Button } from './components/ui/Button';
 import { Input } from './components/ui/Input';
 import { Task, Category } from './types';
-import { Search, Plus, X } from 'lucide-react';
+import { Search, Plus, X, Check, CheckCheck, Trash2, MoreHorizontal } from 'lucide-react';
 import { useTaskStore } from './stores/taskStore';
 import { useCategoryStore } from './stores/categoryStore';
 
@@ -45,6 +45,7 @@ function App() {
     taskCount: 0
   });
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
+  const [showBulkActions, setShowBulkActions] = useState(false);
   const { setFilter, deleteTask, bulkDeleteTasks, bulkMarkTasksCompleted, updateTask, tasks } = useTaskStore();
   const { deleteCategory } = useCategoryStore();
 
@@ -56,6 +57,13 @@ function App() {
       document.documentElement.classList.add('dark');
     }
   }, []);
+
+  // Close bulk actions menu when no tasks are selected
+  useEffect(() => {
+    if (selectedTasks.size === 0) {
+      setShowBulkActions(false);
+    }
+  }, [selectedTasks.size]);
 
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
@@ -308,50 +316,6 @@ function App() {
         <main className="flex-1 overflow-hidden">
           <div className="h-full overflow-auto">
             <div className="max-w-4xl mx-auto p-6">
-              {/* Bulk Actions Bar */}
-              {selectedTasks.size > 0 && (
-                <div className="sticky top-0 z-10 mb-4 p-3 bg-background/95 backdrop-blur-sm rounded-lg border shadow-sm">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">
-                      {selectedTasks.size} task{selectedTasks.size > 1 ? 's' : ''} selected
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleBulkMarkCompleted(true)}
-                        className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 text-xs sm:text-sm"
-                      >
-                        <span className="hidden sm:inline">Mark </span>Done
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleBulkMarkCompleted(false)}
-                        className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 text-xs sm:text-sm"
-                      >
-                        <span className="hidden sm:inline">Mark </span>Undone
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleClearSelection}
-                        className="text-xs sm:text-sm"
-                      >
-                        Clear
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={handleBulkDelete}
-                        className="text-xs sm:text-sm"
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <TaskList 
                 onEditTask={handleEditTask}
@@ -359,6 +323,164 @@ function App() {
                 selectedTasks={selectedTasks}
                 onToggleTaskSelect={handleToggleTaskSelect}
               />
+
+              {/* Floating Action Button for Bulk Operations */}
+              {selectedTasks.size > 0 && (
+                <>
+                  {/* Backdrop for mobile */}
+                  {showBulkActions && (
+                    <div 
+                      className="fixed inset-0 bg-black/20 z-40 md:hidden"
+                      onClick={() => setShowBulkActions(false)}
+                    />
+                  )}
+                  
+                  {/* Desktop: Bottom-right floating menu */}
+                  <div className="hidden md:block">
+                    <div className="fixed bottom-6 right-6 z-50">
+                      {showBulkActions && (
+                        <div className="mb-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 min-w-[200px]">
+                          <div className="text-sm text-gray-600 dark:text-gray-300 px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+                            {selectedTasks.size} task{selectedTasks.size > 1 ? 's' : ''} selected
+                          </div>
+                          <div className="py-2 space-y-1">
+                            <button
+                              onClick={() => {
+                                handleBulkMarkCompleted(true);
+                                setShowBulkActions(false);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center gap-2 text-green-600 dark:text-green-400"
+                            >
+                              <Check className="w-4 h-4" />
+                              Mark as Done
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleBulkMarkCompleted(false);
+                                setShowBulkActions(false);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center gap-2 text-blue-600 dark:text-blue-400"
+                            >
+                              <CheckCheck className="w-4 h-4" />
+                              Mark as Undone
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleClearSelection();
+                                setShowBulkActions(false);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center gap-2"
+                            >
+                              <X className="w-4 h-4" />
+                              Clear Selection
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleBulkDelete();
+                                setShowBulkActions(false);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center gap-2 text-red-600 dark:text-red-400"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Delete Tasks
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => setShowBulkActions(!showBulkActions)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-105"
+                      >
+                        <MoreHorizontal className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Mobile: Bottom sheet */}
+                  <div className="md:hidden">
+                    <div className={`fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 transition-transform duration-300 z-50 ${
+                      showBulkActions ? 'translate-y-0' : 'translate-y-full'
+                    }`}>
+                      <div className="p-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                            {selectedTasks.size} task{selectedTasks.size > 1 ? 's' : ''} selected
+                          </h3>
+                          <button
+                            onClick={() => setShowBulkActions(false)}
+                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              handleBulkMarkCompleted(true);
+                              setShowBulkActions(false);
+                            }}
+                            className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 flex items-center gap-2"
+                          >
+                            <Check className="w-4 h-4" />
+                            Mark Done
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              handleBulkMarkCompleted(false);
+                              setShowBulkActions(false);
+                            }}
+                            className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 flex items-center gap-2"
+                          >
+                            <CheckCheck className="w-4 h-4" />
+                            Mark Undone
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              handleClearSelection();
+                              setShowBulkActions(false);
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <X className="w-4 h-4" />
+                            Clear
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              handleBulkDelete();
+                              setShowBulkActions(false);
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Floating trigger button for mobile */}
+                    <div className="fixed bottom-6 right-6 z-40">
+                      <button
+                        onClick={() => setShowBulkActions(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 relative"
+                      >
+                        <MoreHorizontal className="w-6 h-6" />
+                        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
+                          {selectedTasks.size}
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </main>
