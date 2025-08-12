@@ -12,9 +12,17 @@ interface TaskItemProps {
   task: TaskType;
   onEdit?: (task: TaskType) => void;
   onDelete?: (id: string) => void;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
+export const TaskItem: React.FC<TaskItemProps> = ({ 
+  task, 
+  onEdit, 
+  onDelete, 
+  isSelected = false, 
+  onToggleSelect 
+}) => {
   const toggleTaskCompletion = useTaskStore(state => state.toggleTaskCompletion);
 
   const handleToggleCompletion = async () => {
@@ -22,6 +30,12 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) =>
       await toggleTaskCompletion(task.id);
     } catch (error) {
       console.error('Failed to toggle task completion:', error);
+    }
+  };
+
+  const handleSelectToggle = () => {
+    if (onToggleSelect) {
+      onToggleSelect(task.id);
     }
   };
 
@@ -34,12 +48,17 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) =>
     )}>
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          {/* Checkbox */}
+          {/* Bulk Selection Checkbox */}
           <button
-            onClick={handleToggleCompletion}
-            className="mt-1 flex-shrink-0 w-4 h-4 rounded border-2 border-primary/30 hover:border-primary transition-colors flex items-center justify-center"
+            onClick={handleSelectToggle}
+            className={cn(
+              "mt-1 flex-shrink-0 w-4 h-4 rounded border-2 transition-colors flex items-center justify-center",
+              isSelected 
+                ? "border-primary bg-primary text-primary-foreground" 
+                : "border-muted-foreground/30 hover:border-primary"
+            )}
           >
-            {task.completed && <Check className="w-3 h-3 text-primary" />}
+            {isSelected && <Check className="w-3 h-3" />}
           </button>
 
           {/* Task content */}
@@ -54,6 +73,21 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) =>
               
               {/* Actions */}
               <div className="flex-shrink-0 flex items-center gap-1">
+                {/* Completed Button */}
+                <Button
+                  variant={task.completed ? "default" : "outline"}
+                  size="sm"
+                  onClick={handleToggleCompletion}
+                  className={cn(
+                    "h-7 px-2 text-xs",
+                    task.completed 
+                      ? "bg-green-600 hover:bg-green-700 text-white border-green-600" 
+                      : "border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
+                  )}
+                >
+                  {task.completed ? 'Completed' : 'Mark Done'}
+                </Button>
+                
                 {onEdit && (
                   <Button
                     variant="ghost"

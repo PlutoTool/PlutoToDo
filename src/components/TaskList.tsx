@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TaskItem } from './TaskItem';
 import { Task } from '../types';
 import { useTaskStore } from '../stores/taskStore';
@@ -7,9 +7,16 @@ import { Loader2 } from 'lucide-react';
 interface TaskListProps {
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (id: string) => void;
+  selectedTasks?: Set<string>;
+  onToggleTaskSelect?: (id: string) => void;
 }
 
-export const TaskList: React.FC<TaskListProps> = ({ onEditTask, onDeleteTask }) => {
+export const TaskList: React.FC<TaskListProps> = ({ 
+  onEditTask, 
+  onDeleteTask, 
+  selectedTasks = new Set(), 
+  onToggleTaskSelect 
+}) => {
   const { tasks, loading, error, loadTasks } = useTaskStore();
 
   useEffect(() => {
@@ -48,6 +55,8 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, onDeleteTask }) 
             task={task} 
             onEdit={onEditTask}
             onDelete={onDeleteTask}
+            isSelected={selectedTasks.has(task.id)}
+            onToggleSelect={onToggleTaskSelect}
           />
         </div>
       ))}

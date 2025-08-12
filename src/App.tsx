@@ -18,7 +18,17 @@ function App() {
     isOpen: false,
     taskId: null
   });
-  const { setFilter, deleteTask } = useTaskStore();
+  const [confirmBulkAction, setConfirmBulkAction] = useState<{ 
+    isOpen: boolean; 
+    action: 'delete' | 'markDone' | 'markUndone' | null;
+    taskCount: number;
+  }>({
+    isOpen: false,
+    action: null,
+    taskCount: 0
+  });
+  const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
+  const { setFilter, deleteTask, bulkDeleteTasks, bulkMarkTasksCompleted } = useTaskStore();
 
   useEffect(() => {
     // Check for saved dark mode preference
@@ -99,6 +109,80 @@ function App() {
     }
   };
 
+  const handleToggleTaskSelect = (taskId: string) => {
+    setSelectedTasks(prev => {
+      const newSelected = new Set(prev);
+      if (newSelected.has(taskId)) {
+        newSelected.delete(taskId);
+      } else {
+        newSelected.add(taskId);
+      }
+      return newSelected;
+    });
+  };
+
+  const handleClearSelection = () => {
+    setSelectedTasks(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedTasks.size === 0) return;
+    
+    setConfirmBulkAction({
+      isOpen: true,
+      action: 'delete',
+      taskCount: selectedTasks.size
+    });
+  };
+
+  const handleBulkMarkCompleted = async (completed: boolean) => {
+    if (selectedTasks.size === 0) return;
+    
+    setConfirmBulkAction({
+      isOpen: true,
+      action: completed ? 'markDone' : 'markUndone',
+      taskCount: selectedTasks.size
+    });
+  };
+
+  const executeBulkAction = async () => {
+    if (!confirmBulkAction.action || selectedTasks.size === 0) return;
+
+    const taskIds = Array.from(selectedTasks);
+    
+    try {
+      switch (confirmBulkAction.action) {
+        case 'delete':
+          await bulkDeleteTasks(taskIds);
+          break;
+        case 'markDone':
+          await bulkMarkTasksCompleted(taskIds, true);
+          break;
+        case 'markUndone':
+          await bulkMarkTasksCompleted(taskIds, false);
+          break;
+      }
+      setSelectedTasks(new Set()); // Clear selection after successful action
+    } catch (error) {
+      console.error('Failed to execute bulk action:', error);
+    }
+    
+    setConfirmBulkAction({ isOpen: false, action: null, taskCount: 0 });
+  };
+
+  const cancelBulkAction = () => {
+    setConfirmBulkAction({ isOpen: false, action: null, taskCount: 0 });
+  };
+
+  const getSelectedTaskTitles = () => {
+    const { tasks } = useTaskStore.getState();
+    return Array.from(selectedTasks)
+      .map(id => tasks.find(task => task.id === id)?.title)
+      .filter(Boolean)
+      .slice(0, 3)
+      .join(', ') + (selectedTasks.size > 3 ? '...' : '');
+  };
+
   return (
     <div className="h-screen flex bg-background text-foreground">
       {/* Sidebar */}
@@ -156,9 +240,52 @@ function App() {
               </div>
             ) : null}
 
+            {/* Bulk Actions Bar */}
+            {selectedTasks.size > 0 && (
+              <div className="mb-4 p-3 bg-muted/50 rounded-lg border flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  {selectedTasks.size} task{selectedTasks.size > 1 ? 's' : ''} selected
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleBulkMarkCompleted(true)}
+                    className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
+                  >
+                    Mark Done
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleBulkMarkCompleted(false)}
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
+                  >
+                    Mark Undone
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClearSelection}
+                  >
+                    Clear Selection
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                  >
+                    Delete Selected
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <TaskList 
               onEditTask={handleEditTask}
               onDeleteTask={handleDeleteTask}
+              selectedTasks={selectedTasks}
+              onToggleTaskSelect={handleToggleTaskSelect}
             />
           </div>
         </main>
@@ -172,6 +299,35 @@ function App() {
         onConfirm={confirmDeleteTask}
         onCancel={cancelDeleteTask}
         confirmText="Delete"
+        cancelText="Cancel"
+      />
+
+      {/* Bulk Action Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmBulkAction.isOpen}
+        title={
+          confirmBulkAction.action === 'delete' 
+            ? 'Delete Tasks' 
+            : confirmBulkAction.action === 'markDone'
+            ? 'Mark Tasks as Done'
+            : 'Mark Tasks as Undone'
+        }
+        message={
+          confirmBulkAction.action === 'delete'
+            ? `Are you sure you want to delete ${confirmBulkAction.taskCount} task${confirmBulkAction.taskCount > 1 ? 's' : ''}? This action cannot be undone.`
+            : confirmBulkAction.action === 'markDone'
+            ? `Mark ${confirmBulkAction.taskCount} task${confirmBulkAction.taskCount > 1 ? 's' : ''} as completed?`
+            : `Mark ${confirmBulkAction.taskCount} task${confirmBulkAction.taskCount > 1 ? 's' : ''} as incomplete?`
+        }
+        onConfirm={executeBulkAction}
+        onCancel={cancelBulkAction}
+        confirmText={
+          confirmBulkAction.action === 'delete' 
+            ? 'Delete' 
+            : confirmBulkAction.action === 'markDone'
+            ? 'Mark Done'
+            : 'Mark Undone'
+        }
         cancelText="Cancel"
       />
     </div>

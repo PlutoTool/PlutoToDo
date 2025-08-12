@@ -21,6 +21,10 @@ interface TaskStore {
   deleteTask: (id: string) => Promise<void>;
   toggleTaskCompletion: (id: string) => Promise<Task>;
   searchTasks: (query: string) => Promise<Task[]>;
+  
+  // Bulk actions
+  bulkDeleteTasks: (ids: string[]) => Promise<void>;
+  bulkMarkTasksCompleted: (ids: string[], completed: boolean) => Promise<void>;
 }
 
 export const useTaskStore = create<TaskStore>((set, get) => ({
@@ -130,6 +134,72 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       return tasks;
     } catch (error) {
       set({ error: error as string });
+      throw error;
+    }
+  },
+
+  bulkDeleteTasks: async (ids) => {
+    try {
+      console.log('Bulk deleting tasks:', ids);
+      set({ loading: true, error: null });
+      
+      // Delete tasks one by one (we could optimize this with a bulk command later)
+      for (const id of ids) {
+        await invoke('delete_task', { id });
+      }
+      
+      // Update local state
+      set(state => ({
+        tasks: state.tasks.filter(task => !ids.includes(task.id)),
+        loading: false
+      }));
+      
+      console.log('Bulk delete completed');
+    } catch (error) {
+      console.error('Bulk delete failed:', error);
+      set({ error: error as string, loading: false });
+      throw error;
+    }
+  },
+
+  bulkMarkTasksCompleted: async (ids, completed) => {
+    try {
+      console.log('Bulk marking tasks as completed:', ids, completed);
+      set({ loading: true, error: null });
+      
+      // Update tasks one by one (we could optimize this with a bulk command later)
+      const updatedTasks: Task[] = [];
+      for (const id of ids) {
+        const task = get().tasks.find(t => t.id === id);
+        if (task) {
+          const updatedTask = await invoke<Task>('update_task', {
+            id,
+            title: task.title,
+            description: task.description,
+            completed,
+            priority: task.priority,
+            due_date: task.due_date,
+            category_id: task.category_id,
+            tags: task.tags,
+            parent_id: task.parent_id,
+          });
+          updatedTasks.push(updatedTask);
+        }
+      }
+      
+      // Update local state
+      set(state => ({
+        tasks: state.tasks.map(task => {
+          const updated = updatedTasks.find(ut => ut.id === task.id);
+          return updated || task;
+        }),
+        loading: false
+      }));
+      
+      console.log('Bulk mark completed finished');
+    } catch (error) {
+      console.error('Bulk mark completed failed:', error);
+      set({ error: error as string, loading: false });
       throw error;
     }
   },
