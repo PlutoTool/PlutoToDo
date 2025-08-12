@@ -1,0 +1,70 @@
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  completed: boolean;
+  priority: Priority;
+  due_date?: string; // ISO string
+  category_id?: string;
+  tags: string[];
+  parent_id?: string; // For subtasks
+  created_at: string; // ISO string
+  updated_at: string; // ISO string
+}
+
+export enum Priority {
+  Low = "Low",
+  Medium = "Medium",
+  High = "High",
+}
+
+export interface CreateTaskRequest {
+  title: string;
+  description?: string;
+  priority?: Priority;
+  due_date?: string; // ISO string
+  category_id?: string;
+  tags?: string[];
+  parent_id?: string;
+}
+
+export interface UpdateTaskRequest {
+  title?: string;
+  description?: string;
+  completed?: boolean;
+  priority?: Priority;
+  due_date?: string; // ISO string
+  category_id?: string;
+  tags?: string[];
+  parent_id?: string;
+}
+
+export interface TaskFilter {
+  completed?: boolean;
+  priority?: Priority;
+  category_id?: string;
+  parent_id?: string;
+  search_query?: string;
+  due_before?: string; // ISO string
+  due_after?: string; // ISO string
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  color: string;
+  icon?: string;
+  created_at: string; // ISO string
+}
+
+export interface CreateCategoryRequest {
+  name: string;
+  color: string;
+  icon?: string;
+}
+
+export interface UpdateCategoryRequest {
+  name?: string;
+  color?: string;
+  icon?: string;
+}
