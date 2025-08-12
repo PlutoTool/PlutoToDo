@@ -5,6 +5,7 @@ import { TaskForm } from './components/TaskForm';
 import { CategoryForm } from './components/CategoryForm';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { SortDropdown } from './components/SortDropdown';
+import { Modal } from './components/ui/Modal';
 import { Button } from './components/ui/Button';
 import { Input } from './components/ui/Input';
 import { Task, Category } from './types';
@@ -191,15 +192,6 @@ function App() {
     setConfirmBulkAction({ isOpen: false, action: null, taskCount: 0 });
   };
 
-  const getSelectedTaskTitles = () => {
-    const { tasks } = useTaskStore.getState();
-    return Array.from(selectedTasks)
-      .map(id => tasks.find(task => task.id === id)?.title)
-      .filter(Boolean)
-      .slice(0, 3)
-      .join(', ') + (selectedTasks.size > 3 ? '...' : '');
-  };
-
   // Category handlers
   const handleCreateCategory = () => {
     setEditingCategory(undefined);
@@ -313,78 +305,92 @@ function App() {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="max-w-4xl mx-auto">
-            {showTaskForm ? (
-              <div className="mb-6">
-                <TaskForm 
-                  task={editingTask}
-                  onSubmit={handleFormSubmit}
-                  onCancel={handleFormCancel}
-                />
-              </div>
-            ) : null}
-
-            {showCategoryForm ? (
-              <div className="mb-6">
-                <CategoryForm 
-                  category={editingCategory}
-                  onSubmit={handleCategoryFormSubmit}
-                  onCancel={handleCategoryFormCancel}
-                />
-              </div>
-            ) : null}
-
-            {/* Bulk Actions Bar */}
-            {selectedTasks.size > 0 && (
-              <div className="mb-4 p-3 bg-muted/50 rounded-lg border flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  {selectedTasks.size} task{selectedTasks.size > 1 ? 's' : ''} selected
-                </span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleBulkMarkCompleted(true)}
-                    className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
-                  >
-                    Mark Done
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleBulkMarkCompleted(false)}
-                    className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
-                  >
-                    Mark Undone
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleClearSelection}
-                  >
-                    Clear Selection
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleBulkDelete}
-                  >
-                    Delete Selected
-                  </Button>
+        <main className="flex-1 overflow-hidden">
+          <div className="h-full overflow-auto">
+            <div className="max-w-4xl mx-auto p-6">
+              {/* Bulk Actions Bar */}
+              {selectedTasks.size > 0 && (
+                <div className="sticky top-0 z-10 mb-4 p-3 bg-background/95 backdrop-blur-sm rounded-lg border shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                      {selectedTasks.size} task{selectedTasks.size > 1 ? 's' : ''} selected
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBulkMarkCompleted(true)}
+                        className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 text-xs sm:text-sm"
+                      >
+                        <span className="hidden sm:inline">Mark </span>Done
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBulkMarkCompleted(false)}
+                        className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 text-xs sm:text-sm"
+                      >
+                        <span className="hidden sm:inline">Mark </span>Undone
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleClearSelection}
+                        className="text-xs sm:text-sm"
+                      >
+                        Clear
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleBulkDelete}
+                        className="text-xs sm:text-sm"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <TaskList 
-              onEditTask={handleEditTask}
-              onDeleteTask={handleDeleteTask}
-              selectedTasks={selectedTasks}
-              onToggleTaskSelect={handleToggleTaskSelect}
-            />
+              <TaskList 
+                onEditTask={handleEditTask}
+                onDeleteTask={handleDeleteTask}
+                selectedTasks={selectedTasks}
+                onToggleTaskSelect={handleToggleTaskSelect}
+              />
+            </div>
           </div>
         </main>
       </div>
+
+      {/* Task Modal */}
+      <Modal
+        isOpen={showTaskForm}
+        onClose={handleFormCancel}
+        title={editingTask ? 'Edit Task' : 'Create New Task'}
+        size="lg"
+      >
+        <TaskForm 
+          task={editingTask}
+          onSubmit={handleFormSubmit}
+          onCancel={handleFormCancel}
+        />
+      </Modal>
+
+      {/* Category Modal */}
+      <Modal
+        isOpen={showCategoryForm}
+        onClose={handleCategoryFormCancel}
+        title={editingCategory ? 'Edit Category' : 'Create New Category'}
+        size="md"
+      >
+        <CategoryForm 
+          category={editingCategory}
+          onSubmit={handleCategoryFormSubmit}
+          onCancel={handleCategoryFormCancel}
+        />
+      </Modal>
 
       {/* Confirmation Dialog */}
       <ConfirmDialog

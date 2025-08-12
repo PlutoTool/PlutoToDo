@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
-import { X, Save, Palette } from 'lucide-react';
+import { Save, Palette } from 'lucide-react';
 import { Category } from '../types';
 import { useCategoryStore } from '../stores/categoryStore';
 
@@ -80,118 +79,100 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">
-            {category ? 'Edit Category' : 'New Category'}
-          </CardTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onCancel}
-            className="h-8 w-8"
+    <div className="p-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Category Name */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Name</label>
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter category name"
+            className={errors.name ? 'border-destructive' : ''}
+          />
+          {errors.name && (
+            <p className="text-xs text-destructive">{errors.name}</p>
+          )}
+        </div>
+
+        {/* Color Selection */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            Color
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {PRESET_COLORS.map((presetColor) => (
+              <button
+                key={presetColor}
+                type="button"
+                onClick={() => setColor(presetColor)}
+                className={`w-8 h-8 rounded-full border-2 transition-all ${
+                  color === presetColor 
+                    ? 'border-foreground scale-110' 
+                    : 'border-muted-foreground/20 hover:border-muted-foreground/50'
+                }`}
+                style={{ backgroundColor: presetColor }}
+              />
+            ))}
+          </div>
+          <Input
+            type="color"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            className="w-20 h-10 p-1 border rounded"
+          />
+        </div>
+
+        {/* Icon Selection */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Icon</label>
+          <select
+            value={icon}
+            onChange={(e) => setIcon(e.target.value)}
+            className="w-full p-2 border rounded-md bg-background"
           >
-            <X className="w-4 h-4" />
+            {PRESET_ICONS.map((presetIcon) => (
+              <option key={presetIcon} value={presetIcon}>
+                {presetIcon}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Preview */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Preview</label>
+          <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
+            <div 
+              className="w-4 h-4 rounded-full"
+              style={{ backgroundColor: color }}
+            />
+            <span className="text-sm font-medium">
+              {name || 'Category Name'}
+            </span>
+          </div>
+        </div>
+
+        {/* Form Actions */}
+        <div className="flex gap-2 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            className="flex-1"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {category ? 'Update' : 'Create'}
           </Button>
         </div>
-      </CardHeader>
-
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Category Name */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Name</label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter category name"
-              className={errors.name ? 'border-destructive' : ''}
-            />
-            {errors.name && (
-              <p className="text-xs text-destructive">{errors.name}</p>
-            )}
-          </div>
-
-          {/* Color Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-2">
-              <Palette className="w-4 h-4" />
-              Color
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {PRESET_COLORS.map((presetColor) => (
-                <button
-                  key={presetColor}
-                  type="button"
-                  onClick={() => setColor(presetColor)}
-                  className={`w-8 h-8 rounded-full border-2 transition-all ${
-                    color === presetColor 
-                      ? 'border-foreground scale-110' 
-                      : 'border-muted-foreground/20 hover:border-muted-foreground/50'
-                  }`}
-                  style={{ backgroundColor: presetColor }}
-                />
-              ))}
-            </div>
-            <Input
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className="w-20 h-10 p-1 border rounded"
-            />
-          </div>
-
-          {/* Icon Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Icon</label>
-            <select
-              value={icon}
-              onChange={(e) => setIcon(e.target.value)}
-              className="w-full p-2 border rounded-md bg-background"
-            >
-              {PRESET_ICONS.map((presetIcon) => (
-                <option key={presetIcon} value={presetIcon}>
-                  {presetIcon}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Preview */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Preview</label>
-            <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
-              <div 
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: color }}
-              />
-              <span className="text-sm font-medium">
-                {name || 'Category Name'}
-              </span>
-            </div>
-          </div>
-
-          {/* Form Actions */}
-          <div className="flex gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              {category ? 'Update' : 'Create'}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+      </form>
+    </div>
   );
 };
