@@ -2,16 +2,21 @@ import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { TaskList } from './components/TaskList';
 import { TaskForm } from './components/TaskForm';
+import { CategoryForm } from './components/CategoryForm';
 import { ConfirmDialog } from './components/ConfirmDialog';
+import { SortDropdown } from './components/SortDropdown';
 import { Button } from './components/ui/Button';
 import { Input } from './components/ui/Input';
-import { Task } from './types';
+import { Task, Category } from './types';
 import { Search, Plus, X } from 'lucide-react';
 import { useTaskStore } from './stores/taskStore';
+import { useCategoryStore } from './stores/categoryStore';
 
 function App() {
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
   const [darkMode, setDarkMode] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; taskId: string | null }>({
@@ -27,8 +32,20 @@ function App() {
     action: null,
     taskCount: 0
   });
+  const [confirmCategoryDelete, setConfirmCategoryDelete] = useState<{ 
+    isOpen: boolean; 
+    categoryId: string | null;
+    categoryName: string;
+    taskCount: number;
+  }>({
+    isOpen: false,
+    categoryId: null,
+    categoryName: '',
+    taskCount: 0
+  });
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
-  const { setFilter, deleteTask, bulkDeleteTasks, bulkMarkTasksCompleted } = useTaskStore();
+  const { setFilter, deleteTask, bulkDeleteTasks, bulkMarkTasksCompleted, updateTask, tasks } = useTaskStore();
+  const { deleteCategory } = useCategoryStore();
 
   useEffect(() => {
     // Check for saved dark mode preference
@@ -183,11 +200,76 @@ function App() {
       .join(', ') + (selectedTasks.size > 3 ? '...' : '');
   };
 
+  // Category handlers
+  const handleCreateCategory = () => {
+    setEditingCategory(undefined);
+    setShowCategoryForm(true);
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setShowCategoryForm(true);
+  };
+
+  const handleCategoryFormSubmit = () => {
+    setShowCategoryForm(false);
+    setEditingCategory(undefined);
+  };
+
+  const handleCategoryFormCancel = () => {
+    setShowCategoryForm(false);
+    setEditingCategory(undefined);
+  };
+
+  const handleDeleteCategory = (categoryId: string) => {
+    // Count tasks in this category
+    const tasksInCategory = tasks.filter(task => task.category_id === categoryId);
+    const category = useCategoryStore.getState().categories.find(cat => cat.id === categoryId);
+    
+    setConfirmCategoryDelete({
+      isOpen: true,
+      categoryId,
+      categoryName: category?.name || 'Unknown',
+      taskCount: tasksInCategory.length
+    });
+  };
+
+  const executeCategoryDelete = async () => {
+    if (!confirmCategoryDelete.categoryId) return;
+
+    try {
+      // First, update all tasks in this category to have no category
+      const tasksInCategory = tasks.filter(task => task.category_id === confirmCategoryDelete.categoryId);
+      
+      for (const task of tasksInCategory) {
+        await updateTask(task.id, {
+          ...task,
+          category_id: undefined
+        });
+      }
+
+      // Then delete the category
+      await deleteCategory(confirmCategoryDelete.categoryId);
+      
+    } catch (error) {
+      console.error('Failed to delete category:', error);
+    }
+    
+    setConfirmCategoryDelete({ isOpen: false, categoryId: null, categoryName: '', taskCount: 0 });
+  };
+
+  const cancelCategoryDelete = () => {
+    setConfirmCategoryDelete({ isOpen: false, categoryId: null, categoryName: '', taskCount: 0 });
+  };
+
   return (
     <div className="h-screen flex bg-background text-foreground">
       {/* Sidebar */}
       <Sidebar 
         onCreateTask={handleCreateTask}
+        onCreateCategory={handleCreateCategory}
+        onEditCategory={handleEditCategory}
+        onDeleteCategory={handleDeleteCategory}
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
       />
@@ -196,18 +278,18 @@ function App() {
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="border-b border-border p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h2 className="text-xl font-semibold">Tasks</h2>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+              <h2 className="text-xl font-semibold whitespace-nowrap">Tasks</h2>
               
               {/* Search */}
-              <div className="relative">
+              <div className="relative flex-1 max-w-xs">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search tasks..."
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10 w-64"
+                  className="pl-10 w-full"
                 />
                 {searchQuery && (
                   <button
@@ -218,11 +300,14 @@ function App() {
                   </button>
                 )}
               </div>
+
+              {/* Sort Dropdown */}
+              <SortDropdown />
             </div>
 
-            <Button onClick={handleCreateTask}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Task
+            <Button onClick={handleCreateTask} className="whitespace-nowrap">
+              <Plus className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">New Task</span>
             </Button>
           </div>
         </header>
@@ -236,6 +321,16 @@ function App() {
                   task={editingTask}
                   onSubmit={handleFormSubmit}
                   onCancel={handleFormCancel}
+                />
+              </div>
+            ) : null}
+
+            {showCategoryForm ? (
+              <div className="mb-6">
+                <CategoryForm 
+                  category={editingCategory}
+                  onSubmit={handleCategoryFormSubmit}
+                  onCancel={handleCategoryFormCancel}
                 />
               </div>
             ) : null}
@@ -328,6 +423,21 @@ function App() {
             ? 'Mark Done'
             : 'Mark Undone'
         }
+        cancelText="Cancel"
+      />
+
+      {/* Category Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmCategoryDelete.isOpen}
+        title="Delete Category"
+        message={
+          confirmCategoryDelete.taskCount > 0
+            ? `Are you sure you want to delete the category "${confirmCategoryDelete.categoryName}"? This will remove the category from ${confirmCategoryDelete.taskCount} task${confirmCategoryDelete.taskCount > 1 ? 's' : ''}, but the tasks will not be deleted.`
+            : `Are you sure you want to delete the category "${confirmCategoryDelete.categoryName}"?`
+        }
+        onConfirm={executeCategoryDelete}
+        onCancel={cancelCategoryDelete}
+        confirmText="Delete Category"
         cancelText="Cancel"
       />
     </div>

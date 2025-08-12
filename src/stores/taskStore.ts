@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Task, TaskFilter, CreateTaskRequest, UpdateTaskRequest } from '../types';
+import { Task, TaskFilter, CreateTaskRequest, UpdateTaskRequest, SortConfig, SortField, SortOrder, Priority } from '../types';
 import { invoke } from '@tauri-apps/api/core';
 
 interface TaskStore {
@@ -7,12 +7,15 @@ interface TaskStore {
   loading: boolean;
   error: string | null;
   filter: TaskFilter;
+  sortConfig: SortConfig;
   
   // Actions
   setTasks: (tasks: Task[]) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setFilter: (filter: TaskFilter) => void;
+  setSortConfig: (sortConfig: SortConfig) => void;
+  sortTasks: (tasks: Task[]) => Task[];
   
   // Async actions
   loadTasks: () => Promise<void>;
@@ -32,17 +35,88 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   loading: false,
   error: null,
   filter: {},
+  sortConfig: { field: SortField.CreatedAt, order: SortOrder.Desc },
 
-  setTasks: (tasks) => set({ tasks }),
+  setTasks: (tasks) => {
+    const sortedTasks = get().sortTasks(tasks);
+    set({ tasks: sortedTasks });
+  },
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
-  setFilter: (filter) => set({ filter }),
+  setFilter: (filter) => {
+    set({ filter });
+    // Automatically reload tasks when filter changes
+    get().loadTasks();
+  },
+  setSortConfig: (sortConfig) => {
+    set({ sortConfig });
+    // Re-sort existing tasks with new config
+    const currentTasks = get().tasks;
+    const sortedTasks = get().sortTasks(currentTasks);
+    set({ tasks: sortedTasks });
+  },
+
+  sortTasks: (tasks) => {
+    const { field, order } = get().sortConfig;
+    
+    return [...tasks].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (field) {
+        case SortField.Title:
+          comparison = a.title.toLowerCase().localeCompare(b.title.toLowerCase());
+          break;
+        case SortField.DueDate:
+          // Handle null/undefined due dates - put them at the end
+          if (!a.due_date && !b.due_date) comparison = 0;
+          else if (!a.due_date) comparison = 1;
+          else if (!b.due_date) comparison = -1;
+          else comparison = new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+          break;
+        case SortField.CreatedAt:
+          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          break;
+        case SortField.UpdatedAt:
+          comparison = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+          break;
+        case SortField.Priority:
+          const priorityOrder = { [Priority.High]: 3, [Priority.Medium]: 2, [Priority.Low]: 1 };
+          comparison = priorityOrder[a.priority] - priorityOrder[b.priority];
+          break;
+        case SortField.Completed:
+          comparison = Number(a.completed) - Number(b.completed);
+          break;
+        default:
+          comparison = 0;
+      }
+      
+      return order === SortOrder.Asc ? comparison : -comparison;
+    });
+  },
 
   loadTasks: async () => {
     try {
       set({ loading: true, error: null });
-      const tasks = await invoke<Task[]>('get_tasks', { filter: get().filter });
-      set({ tasks, loading: false });
+      const currentFilter = get().filter;
+      
+      // Only pass filter if it has meaningful values
+      const hasFilter = currentFilter && (
+        currentFilter.completed !== undefined ||
+        currentFilter.priority !== undefined ||
+        currentFilter.category_id !== undefined ||
+        currentFilter.parent_id !== undefined ||
+        currentFilter.search_query !== undefined ||
+        currentFilter.due_before !== undefined ||
+        currentFilter.due_after !== undefined ||
+        currentFilter.no_category !== undefined
+      );
+      
+      const tasks = hasFilter 
+        ? await invoke<Task[]>('get_tasks', { filter: currentFilter })
+        : await invoke<Task[]>('get_tasks', { filter: null });
+        
+      get().setTasks(tasks); // Use setTasks to apply sorting
+      set({ loading: false });
     } catch (error) {
       set({ error: error as string, loading: false });
     }
@@ -60,10 +134,11 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         tags: taskRequest.tags,
         parent_id: taskRequest.parent_id,
       });
-      set(state => ({ 
-        tasks: [newTask, ...state.tasks], 
-        loading: false 
-      }));
+      
+      // Add new task and re-sort
+      const currentTasks = get().tasks;
+      get().setTasks([newTask, ...currentTasks]);
+      set({ loading: false });
       return newTask;
     } catch (error) {
       set({ error: error as string, loading: false });
@@ -85,10 +160,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         tags: updates.tags,
         parent_id: updates.parent_id,
       });
-      set(state => ({
-        tasks: state.tasks.map(task => task.id === id ? updatedTask : task),
-        loading: false
-      }));
+      
+      // Update task and re-sort
+      const currentTasks = get().tasks;
+      const updatedTasks = currentTasks.map(task => task.id === id ? updatedTask : task);
+      get().setTasks(updatedTasks);
+      set({ loading: false });
       return updatedTask;
     } catch (error) {
       set({ error: error as string, loading: false });

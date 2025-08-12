@@ -81,6 +81,7 @@ pub struct TaskFilter {
     pub search_query: Option<String>,
     pub due_before: Option<NaiveDateTime>,
     pub due_after: Option<NaiveDateTime>,
+    pub no_category: Option<bool>, // true means filter for tasks with no category
 }
 
 impl Task {

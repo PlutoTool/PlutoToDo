@@ -90,6 +90,11 @@ impl<'a> TaskRepository<'a> {
                 conditions.push("category_id = ?".to_string());
                 params.push(Box::new(category_id));
             }
+            if let Some(no_category) = f.no_category {
+                if no_category {
+                    conditions.push("category_id IS NULL".to_string());
+                }
+            }
             if let Some(parent_id) = f.parent_id {
                 conditions.push("parent_id = ?".to_string());
                 params.push(Box::new(parent_id));

@@ -17,11 +17,11 @@ export const TaskList: React.FC<TaskListProps> = ({
   selectedTasks = new Set(), 
   onToggleTaskSelect 
 }) => {
-  const { tasks, loading, error, loadTasks } = useTaskStore();
+  const { tasks, loading, error, loadTasks, filter } = useTaskStore();
 
   useEffect(() => {
     loadTasks();
-  }, [loadTasks]);
+  }, [loadTasks, filter]); // React to filter changes
 
   if (loading) {
     return (

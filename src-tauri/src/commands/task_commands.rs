@@ -160,6 +160,7 @@ pub async fn search_tasks(
         search_query: Some(query),
         due_before: None,
         due_after: None,
+        no_category: None,
     };
     
     task_repo.get_all(Some(filter)).map_err(|e| format!("Failed to search tasks: {}", e))
@@ -181,6 +182,7 @@ pub async fn get_tasks_by_category(
         search_query: None,
         due_before: None,
         due_after: None,
+        no_category: None,
     };
     
     task_repo.get_all(Some(filter)).map_err(|e| format!("Failed to get tasks by category: {}", e))
