@@ -125,15 +125,19 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   createTask: async (taskRequest) => {
     try {
       set({ loading: true, error: null });
-      const newTask = await invoke<Task>('create_task', {
+      
+      // Create request object - single parameter approach
+      const requestObject = {
         title: taskRequest.title,
-        description: taskRequest.description,
-        priority: taskRequest.priority,
-        due_date: taskRequest.due_date,
-        category_id: taskRequest.category_id,
-        tags: taskRequest.tags,
-        parent_id: taskRequest.parent_id,
-      });
+        description: taskRequest.description || null,
+        priority: taskRequest.priority || null,
+        due_date: taskRequest.due_date || null,
+        category_id: taskRequest.category_id || null,
+        tags: taskRequest.tags && taskRequest.tags.length > 0 ? taskRequest.tags : null,
+        parent_id: taskRequest.parent_id || null,
+      };
+      
+      const newTask = await invoke<Task>('create_task', { request: requestObject });
       
       // Add new task and re-sort
       const currentTasks = get().tasks;

@@ -24,6 +24,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
   const [dueDate, setDueDate] = useState(
     task?.due_date ? format(new Date(task.due_date), 'yyyy-MM-dd') : ''
   );
+  const [dueTime, setDueTime] = useState(
+    task?.due_date ? format(new Date(task.due_date), 'HH:mm') : '23:59'
+  );
+  const [noDueDate, setNoDueDate] = useState(!task?.due_date);
   const [categoryId, setCategoryId] = useState(task?.category_id || '');
   const [tags, setTags] = useState<string[]>(task?.tags || []);
   const [newTag, setNewTag] = useState('');
@@ -33,17 +37,36 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
     loadCategories();
   }, [loadCategories]);
 
+  // Handle "No Due Date" checkbox logic
+  useEffect(() => {
+    if (noDueDate) {
+      // Clear date when "No Due Date" is checked
+      setDueDate('');
+    } else if (!dueDate) {
+      // Set today's date when "No Due Date" is unchecked and no date is set
+      const today = new Date().toISOString().split('T')[0];
+      setDueDate(today);
+    }
+  }, [noDueDate, dueDate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
     setLoading(true);
     try {
+      // Convert date and time to ISO string if not "No Due Date"
+      let dueDateString: string | undefined = undefined;
+      if (!noDueDate && dueDate) {
+        const dateTimeString = `${dueDate}T${dueTime}:00.000Z`;
+        dueDateString = new Date(dateTimeString).toISOString();
+      }
+      
       const taskData = {
         title: title.trim(),
         description: description.trim() || undefined,
         priority,
-        due_date: dueDate ? new Date(dueDate).toISOString() : undefined,
+        due_date: dueDateString,
         category_id: categoryId || undefined,
         tags: tags.length > 0 ? tags : undefined,
       };
@@ -130,15 +153,45 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
 
         {/* Due Date */}
         <div>
-          <label htmlFor="dueDate" className="text-sm font-medium mb-1 block">
-            Due Date
-          </label>
-          <Input
-            id="dueDate"
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
+          <div className="flex items-center space-x-2 mb-2">
+            <input
+              id="noDueDate"
+              type="checkbox"
+              checked={noDueDate}
+              onChange={(e) => setNoDueDate(e.target.checked)}
+              className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <label htmlFor="noDueDate" className="text-sm font-medium">
+              No Due Date
+            </label>
+          </div>
+          
+          {!noDueDate && (
+            <div className="space-y-2">
+              <div>
+                <label htmlFor="dueDate" className="text-sm font-medium mb-1 block">
+                  Due Date
+                </label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="dueTime" className="text-sm font-medium mb-1 block">
+                  Due Time
+                </label>
+                <Input
+                  id="dueTime"
+                  type="time"
+                  value={dueTime}
+                  onChange={(e) => setDueTime(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Category */}

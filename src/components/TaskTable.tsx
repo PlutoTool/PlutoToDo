@@ -3,7 +3,7 @@ import { Task } from '../types';
 import { Button } from './ui/Button';
 import { Check, Edit2, Trash2, Calendar, Tag } from 'lucide-react';
 import { useTaskStore } from '../stores/taskStore';
-import { formatDate, isOverdue } from '../utils/dateUtils';
+import { formatDateTime, isOverdue } from '../utils/dateUtils';
 import { getPriorityColor } from '../utils/priorityUtils';
 import { cn } from '../utils/cn';
 
@@ -59,7 +59,7 @@ export const TaskTable: React.FC<TaskTableProps> = ({
                 Task
               </th>
               <th className="p-3 text-left text-sm font-medium text-muted-foreground min-w-[120px]">
-                Due Date
+                Due Date & Time
               </th>
               <th className="p-3 text-left text-sm font-medium text-muted-foreground">
                 Priority
@@ -136,7 +136,7 @@ export const TaskTable: React.FC<TaskTableProps> = ({
                           : 'text-foreground'
                       )}>
                         <Calendar className="w-3 h-3 flex-shrink-0" />
-                        <span className="whitespace-nowrap">{formatDate(task.due_date)}</span>
+                        <span className="whitespace-nowrap">{formatDateTime(task.due_date)}</span>
                         {isTaskOverdue && (
                           <span className="text-xs bg-destructive/10 text-destructive px-1 py-0.5 rounded ml-1">
                             Overdue
