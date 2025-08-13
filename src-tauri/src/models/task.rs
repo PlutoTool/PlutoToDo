@@ -16,7 +16,7 @@ pub struct Task {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum Priority {
     Low,
     Medium,
@@ -53,8 +53,8 @@ impl Priority {
 pub struct CreateTaskRequest {
     pub title: String,
     pub description: Option<String>,
-    pub priority: Option<Priority>,
-    pub due_date: Option<NaiveDateTime>,
+    pub priority: Option<String>,  // Changed to String for easier parsing
+    pub due_date: Option<String>,  // Changed to String for JSON serialization
     pub category_id: Option<String>,
     pub tags: Option<Vec<String>>,
     pub parent_id: Option<String>,
@@ -79,21 +79,82 @@ pub struct TaskFilter {
     pub category_id: Option<String>,
     pub parent_id: Option<String>,
     pub search_query: Option<String>,
-    pub due_before: Option<NaiveDateTime>,
-    pub due_after: Option<NaiveDateTime>,
+    pub due_before: Option<String>, // Accept as string and parse later
+    pub due_after: Option<String>,  // Accept as string and parse later
+    pub no_category: Option<bool>, // true means filter for tasks with no category
+}
+
+impl TaskFilter {
+    pub fn parse_due_before(&self) -> Option<NaiveDateTime> {
+        self.due_before.as_ref().and_then(|d| {
+            if d.is_empty() {
+                return None;
+            }
+            
+            use chrono::DateTime;
+            
+            // Try parsing as full ISO 8601 datetime
+            DateTime::parse_from_rfc3339(d)
+                .or_else(|_| {
+                    // Try parsing as date only (YYYY-MM-DD) and add time
+                    let datetime_str = format!("{}T23:59:59Z", d);
+                    DateTime::parse_from_rfc3339(&datetime_str)
+                })
+                .ok()
+                .map(|dt| dt.naive_utc())
+        })
+    }
+
+    pub fn parse_due_after(&self) -> Option<NaiveDateTime> {
+        self.due_after.as_ref().and_then(|d| {
+            if d.is_empty() {
+                return None;
+            }
+            
+            use chrono::DateTime;
+            
+            // Try parsing as full ISO 8601 datetime
+            DateTime::parse_from_rfc3339(d)
+                .or_else(|_| {
+                    // Try parsing as date only (YYYY-MM-DD) and add time
+                    let datetime_str = format!("{}T00:00:00Z", d);
+                    DateTime::parse_from_rfc3339(&datetime_str)
+                })
+                .ok()
+                .map(|dt| dt.naive_utc())
+        })
+    }
 }
 
 impl Task {
     pub fn new(request: CreateTaskRequest) -> Self {
         let now = Utc::now().naive_utc();
         
+        // Parse due_date from string
+        let parsed_due_date = request.due_date.and_then(|d| {
+            if d.is_empty() {
+                return None;
+            }
+            
+            use chrono::DateTime;
+            
+            DateTime::parse_from_rfc3339(&d)
+                .or_else(|_| {
+                    // Try parsing as date only (YYYY-MM-DD)
+                    let datetime_str = format!("{}T00:00:00Z", d);
+                    DateTime::parse_from_rfc3339(&datetime_str)
+                })
+                .ok()
+                .map(|dt| dt.naive_utc())
+        });
+        
         Task {
             id: uuid::Uuid::new_v4().to_string(),
             title: request.title,
             description: request.description,
             completed: false,
-            priority: request.priority.unwrap_or_default(),
-            due_date: request.due_date,
+            priority: request.priority.map(|p| Priority::from_string(&p)).unwrap_or_default(),
+            due_date: parsed_due_date,
             category_id: request.category_id,
             tags: request.tags.unwrap_or_default(),
             parent_id: request.parent_id,

@@ -77,34 +77,39 @@ impl<'a> TaskRepository<'a> {
         let mut conditions = Vec::new();
         let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
-        if let Some(f) = filter {
+        if let Some(ref f) = filter {
             if let Some(completed) = f.completed {
                 conditions.push("completed = ?".to_string());
                 params.push(Box::new(completed));
             }
-            if let Some(priority) = f.priority {
+            if let Some(ref priority) = f.priority {
                 conditions.push("priority = ?".to_string());
                 params.push(Box::new(priority.to_string()));
             }
-            if let Some(category_id) = f.category_id {
+            if let Some(ref category_id) = f.category_id {
                 conditions.push("category_id = ?".to_string());
-                params.push(Box::new(category_id));
+                params.push(Box::new(category_id.clone()));
             }
-            if let Some(parent_id) = f.parent_id {
+            if let Some(no_category) = f.no_category {
+                if no_category {
+                    conditions.push("category_id IS NULL".to_string());
+                }
+            }
+            if let Some(ref parent_id) = f.parent_id {
                 conditions.push("parent_id = ?".to_string());
-                params.push(Box::new(parent_id));
+                params.push(Box::new(parent_id.clone()));
             }
-            if let Some(search_query) = f.search_query {
+            if let Some(ref search_query) = f.search_query {
                 conditions.push("(title LIKE ? OR description LIKE ?)".to_string());
                 let search_pattern = format!("%{}%", search_query);
                 params.push(Box::new(search_pattern.clone()));
                 params.push(Box::new(search_pattern));
             }
-            if let Some(due_before) = f.due_before {
+            if let Some(due_before) = f.parse_due_before() {
                 conditions.push("due_date <= ?".to_string());
                 params.push(Box::new(due_before));
             }
-            if let Some(due_after) = f.due_after {
+            if let Some(due_after) = f.parse_due_after() {
                 conditions.push("due_date >= ?".to_string());
                 params.push(Box::new(due_after));
             }

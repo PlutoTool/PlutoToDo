@@ -1,4 +1,4 @@
-import { format, isToday, isTomorrow, isYesterday, isPast, parseISO } from 'date-fns';
+import { format, isToday, isTomorrow, isYesterday, parseISO } from 'date-fns';
 
 export function formatDate(dateString: string): string {
   const date = parseISO(dateString);
@@ -30,7 +30,8 @@ export function formatDateTime(dateString: string): string {
 
 export function isOverdue(dateString: string): boolean {
   const date = parseISO(dateString);
-  return isPast(date) && !isToday(date);
+  const now = new Date();
+  return date < now; // Simply check if the datetime has passed
 }
 
 export function getDaysUntilDue(dateString: string): number {

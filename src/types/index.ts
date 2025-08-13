@@ -47,6 +47,26 @@ export interface TaskFilter {
   search_query?: string;
   due_before?: string; // ISO string
   due_after?: string; // ISO string
+  no_category?: boolean; // true means filter for tasks with no category
+}
+
+export enum SortField {
+  Title = "title",
+  DueDate = "due_date", 
+  CreatedAt = "created_at",
+  UpdatedAt = "updated_at",
+  Priority = "priority",
+  Completed = "completed"
+}
+
+export enum SortOrder {
+  Asc = "asc",
+  Desc = "desc"
+}
+
+export interface SortConfig {
+  field: SortField;
+  order: SortOrder;
 }
 
 export interface Category {

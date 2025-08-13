@@ -7,35 +7,10 @@ use chrono::DateTime;
 #[tauri::command]
 pub async fn create_task(
     db: State<'_, Mutex<Database>>,
-    title: String,
-    description: Option<String>,
-    priority: Option<String>,
-    due_date: Option<String>,
-    category_id: Option<String>,
-    tags: Option<Vec<String>>,
-    parent_id: Option<String>,
+    request: CreateTaskRequest,
 ) -> Result<Task, String> {
     let db_lock = db.lock().map_err(|e| format!("Database lock error: {}", e))?;
     let task_repo = TaskRepository::new(&db_lock.connection);
-    
-    let request = CreateTaskRequest {
-        title,
-        description,
-        priority: priority.map(|p| crate::models::Priority::from_string(&p)),
-        due_date: due_date.and_then(|d| {
-            DateTime::parse_from_rfc3339(&d)
-                .or_else(|_| {
-                    // Try parsing as date only (YYYY-MM-DD)
-                    let datetime_str = format!("{}T00:00:00Z", d);
-                    DateTime::parse_from_rfc3339(&datetime_str)
-                })
-                .ok()
-                .map(|dt| dt.naive_utc())
-        }),
-        category_id,
-        tags,
-        parent_id,
-    };
     
     let task = Task::new(request);
     task_repo.create(&task).map_err(|e| format!("Failed to create task: {}", e))?;
@@ -160,6 +135,7 @@ pub async fn search_tasks(
         search_query: Some(query),
         due_before: None,
         due_after: None,
+        no_category: None,
     };
     
     task_repo.get_all(Some(filter)).map_err(|e| format!("Failed to search tasks: {}", e))
@@ -181,6 +157,7 @@ pub async fn get_tasks_by_category(
         search_query: None,
         due_before: None,
         due_after: None,
+        no_category: None,
     };
     
     task_repo.get_all(Some(filter)).map_err(|e| format!("Failed to get tasks by category: {}", e))

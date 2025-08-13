@@ -2,16 +2,24 @@ import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { TaskList } from './components/TaskList';
 import { TaskForm } from './components/TaskForm';
+import { CategoryForm } from './components/CategoryForm';
 import { ConfirmDialog } from './components/ConfirmDialog';
+import { SortDropdown } from './components/SortDropdown';
+import { AboutModal } from './components/AboutModal';
+import { Modal } from './components/ui/Modal';
 import { Button } from './components/ui/Button';
 import { Input } from './components/ui/Input';
-import { Task } from './types';
-import { Search, Plus, X } from 'lucide-react';
+import { Task, Category } from './types';
+import { Search, Plus, X, Check, CheckCheck, Trash2, MoreHorizontal } from 'lucide-react';
 import { useTaskStore } from './stores/taskStore';
+import { useCategoryStore } from './stores/categoryStore';
 
 function App() {
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | undefined>();
+  const [showAbout, setShowAbout] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [darkMode, setDarkMode] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; taskId: string | null }>({
@@ -27,8 +35,21 @@ function App() {
     action: null,
     taskCount: 0
   });
+  const [confirmCategoryDelete, setConfirmCategoryDelete] = useState<{ 
+    isOpen: boolean; 
+    categoryId: string | null;
+    categoryName: string;
+    taskCount: number;
+  }>({
+    isOpen: false,
+    categoryId: null,
+    categoryName: '',
+    taskCount: 0
+  });
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
-  const { setFilter, deleteTask, bulkDeleteTasks, bulkMarkTasksCompleted } = useTaskStore();
+  const [showBulkActions, setShowBulkActions] = useState(false);
+  const { setFilter, deleteTask, bulkDeleteTasks, bulkMarkTasksCompleted, updateTask, tasks } = useTaskStore();
+  const { deleteCategory } = useCategoryStore();
 
   useEffect(() => {
     // Check for saved dark mode preference
@@ -38,6 +59,13 @@ function App() {
       document.documentElement.classList.add('dark');
     }
   }, []);
+
+  // Close bulk actions menu when no tasks are selected
+  useEffect(() => {
+    if (selectedTasks.size === 0) {
+      setShowBulkActions(false);
+    }
+  }, [selectedTasks.size]);
 
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
@@ -174,13 +202,66 @@ function App() {
     setConfirmBulkAction({ isOpen: false, action: null, taskCount: 0 });
   };
 
-  const getSelectedTaskTitles = () => {
-    const { tasks } = useTaskStore.getState();
-    return Array.from(selectedTasks)
-      .map(id => tasks.find(task => task.id === id)?.title)
-      .filter(Boolean)
-      .slice(0, 3)
-      .join(', ') + (selectedTasks.size > 3 ? '...' : '');
+  // Category handlers
+  const handleCreateCategory = () => {
+    setEditingCategory(undefined);
+    setShowCategoryForm(true);
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setShowCategoryForm(true);
+  };
+
+  const handleCategoryFormSubmit = () => {
+    setShowCategoryForm(false);
+    setEditingCategory(undefined);
+  };
+
+  const handleCategoryFormCancel = () => {
+    setShowCategoryForm(false);
+    setEditingCategory(undefined);
+  };
+
+  const handleDeleteCategory = (categoryId: string) => {
+    // Count tasks in this category
+    const tasksInCategory = tasks.filter(task => task.category_id === categoryId);
+    const category = useCategoryStore.getState().categories.find(cat => cat.id === categoryId);
+    
+    setConfirmCategoryDelete({
+      isOpen: true,
+      categoryId,
+      categoryName: category?.name || 'Unknown',
+      taskCount: tasksInCategory.length
+    });
+  };
+
+  const executeCategoryDelete = async () => {
+    if (!confirmCategoryDelete.categoryId) return;
+
+    try {
+      // First, update all tasks in this category to have no category
+      const tasksInCategory = tasks.filter(task => task.category_id === confirmCategoryDelete.categoryId);
+      
+      for (const task of tasksInCategory) {
+        await updateTask(task.id, {
+          ...task,
+          category_id: undefined
+        });
+      }
+
+      // Then delete the category
+      await deleteCategory(confirmCategoryDelete.categoryId);
+      
+    } catch (error) {
+      console.error('Failed to delete category:', error);
+    }
+    
+    setConfirmCategoryDelete({ isOpen: false, categoryId: null, categoryName: '', taskCount: 0 });
+  };
+
+  const cancelCategoryDelete = () => {
+    setConfirmCategoryDelete({ isOpen: false, categoryId: null, categoryName: '', taskCount: 0 });
   };
 
   return (
@@ -188,6 +269,10 @@ function App() {
       {/* Sidebar */}
       <Sidebar 
         onCreateTask={handleCreateTask}
+        onCreateCategory={handleCreateCategory}
+        onEditCategory={handleEditCategory}
+        onDeleteCategory={handleDeleteCategory}
+        onShowAbout={() => setShowAbout(true)}
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
       />
@@ -196,18 +281,18 @@ function App() {
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="border-b border-border p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h2 className="text-xl font-semibold">Tasks</h2>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+              <h2 className="text-xl font-semibold whitespace-nowrap">Tasks</h2>
               
               {/* Search */}
-              <div className="relative">
+              <div className="relative flex-1 max-w-xs">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search tasks..."
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10 w-64"
+                  className="pl-10 w-full"
                 />
                 {searchQuery && (
                   <button
@@ -218,78 +303,219 @@ function App() {
                   </button>
                 )}
               </div>
+
+              {/* Sort Dropdown */}
+              <SortDropdown />
             </div>
 
-            <Button onClick={handleCreateTask}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Task
+            <Button onClick={handleCreateTask} className="whitespace-nowrap">
+              <Plus className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">New Task</span>
             </Button>
           </div>
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="max-w-4xl mx-auto">
-            {showTaskForm ? (
-              <div className="mb-6">
-                <TaskForm 
-                  task={editingTask}
-                  onSubmit={handleFormSubmit}
-                  onCancel={handleFormCancel}
-                />
-              </div>
-            ) : null}
+        <main className="flex-1 overflow-hidden">
+          <div className="h-full overflow-auto">
+            <div className="max-w-4xl mx-auto p-6">
 
-            {/* Bulk Actions Bar */}
-            {selectedTasks.size > 0 && (
-              <div className="mb-4 p-3 bg-muted/50 rounded-lg border flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  {selectedTasks.size} task{selectedTasks.size > 1 ? 's' : ''} selected
-                </span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleBulkMarkCompleted(true)}
-                    className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
-                  >
-                    Mark Done
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleBulkMarkCompleted(false)}
-                    className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
-                  >
-                    Mark Undone
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleClearSelection}
-                  >
-                    Clear Selection
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleBulkDelete}
-                  >
-                    Delete Selected
-                  </Button>
-                </div>
-              </div>
-            )}
+              <TaskList 
+                onEditTask={handleEditTask}
+                onDeleteTask={handleDeleteTask}
+                selectedTasks={selectedTasks}
+                onToggleTaskSelect={handleToggleTaskSelect}
+              />
 
-            <TaskList 
-              onEditTask={handleEditTask}
-              onDeleteTask={handleDeleteTask}
-              selectedTasks={selectedTasks}
-              onToggleTaskSelect={handleToggleTaskSelect}
-            />
+              {/* Floating Action Button for Bulk Operations */}
+              {selectedTasks.size > 0 && (
+                <>
+                  {/* Backdrop for mobile */}
+                  {showBulkActions && (
+                    <div 
+                      className="fixed inset-0 bg-black/20 z-40 md:hidden"
+                      onClick={() => setShowBulkActions(false)}
+                    />
+                  )}
+                  
+                  {/* Desktop: Bottom-right floating menu */}
+                  <div className="hidden md:block">
+                    <div className="fixed bottom-6 right-6 z-50">
+                      {showBulkActions && (
+                        <div className="mb-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 min-w-[200px]">
+                          <div className="text-sm text-gray-600 dark:text-gray-300 px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+                            {selectedTasks.size} task{selectedTasks.size > 1 ? 's' : ''} selected
+                          </div>
+                          <div className="py-2 space-y-1">
+                            <button
+                              onClick={() => {
+                                handleBulkMarkCompleted(true);
+                                setShowBulkActions(false);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center gap-2 text-green-600 dark:text-green-400"
+                            >
+                              <Check className="w-4 h-4" />
+                              Mark as Done
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleBulkMarkCompleted(false);
+                                setShowBulkActions(false);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center gap-2 text-blue-600 dark:text-blue-400"
+                            >
+                              <CheckCheck className="w-4 h-4" />
+                              Mark as Undone
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleClearSelection();
+                                setShowBulkActions(false);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center gap-2"
+                            >
+                              <X className="w-4 h-4" />
+                              Clear Selection
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleBulkDelete();
+                                setShowBulkActions(false);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center gap-2 text-red-600 dark:text-red-400"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Delete Tasks
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => setShowBulkActions(!showBulkActions)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-105"
+                      >
+                        <MoreHorizontal className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Mobile: Bottom sheet */}
+                  <div className="md:hidden">
+                    <div className={`fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 transition-transform duration-300 z-50 ${
+                      showBulkActions ? 'translate-y-0' : 'translate-y-full'
+                    }`}>
+                      <div className="p-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                            {selectedTasks.size} task{selectedTasks.size > 1 ? 's' : ''} selected
+                          </h3>
+                          <button
+                            onClick={() => setShowBulkActions(false)}
+                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              handleBulkMarkCompleted(true);
+                              setShowBulkActions(false);
+                            }}
+                            className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 flex items-center gap-2"
+                          >
+                            <Check className="w-4 h-4" />
+                            Mark Done
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              handleBulkMarkCompleted(false);
+                              setShowBulkActions(false);
+                            }}
+                            className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 flex items-center gap-2"
+                          >
+                            <CheckCheck className="w-4 h-4" />
+                            Mark Undone
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              handleClearSelection();
+                              setShowBulkActions(false);
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <X className="w-4 h-4" />
+                            Clear
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              handleBulkDelete();
+                              setShowBulkActions(false);
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Floating trigger button for mobile */}
+                    <div className="fixed bottom-6 right-6 z-40">
+                      <button
+                        onClick={() => setShowBulkActions(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 relative"
+                      >
+                        <MoreHorizontal className="w-6 h-6" />
+                        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
+                          {selectedTasks.size}
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </main>
       </div>
+
+      {/* Task Modal */}
+      <Modal
+        isOpen={showTaskForm}
+        onClose={handleFormCancel}
+        title={editingTask ? 'Edit Task' : 'Create New Task'}
+        size="lg"
+      >
+        <TaskForm 
+          task={editingTask}
+          onSubmit={handleFormSubmit}
+          onCancel={handleFormCancel}
+        />
+      </Modal>
+
+      {/* Category Modal */}
+      <Modal
+        isOpen={showCategoryForm}
+        onClose={handleCategoryFormCancel}
+        title={editingCategory ? 'Edit Category' : 'Create New Category'}
+        size="md"
+      >
+        <CategoryForm 
+          category={editingCategory}
+          onSubmit={handleCategoryFormSubmit}
+          onCancel={handleCategoryFormCancel}
+        />
+      </Modal>
 
       {/* Confirmation Dialog */}
       <ConfirmDialog
@@ -329,6 +555,27 @@ function App() {
             : 'Mark Undone'
         }
         cancelText="Cancel"
+      />
+
+      {/* Category Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmCategoryDelete.isOpen}
+        title="Delete Category"
+        message={
+          confirmCategoryDelete.taskCount > 0
+            ? `Are you sure you want to delete the category "${confirmCategoryDelete.categoryName}"? This will remove the category from ${confirmCategoryDelete.taskCount} task${confirmCategoryDelete.taskCount > 1 ? 's' : ''}, but the tasks will not be deleted.`
+            : `Are you sure you want to delete the category "${confirmCategoryDelete.categoryName}"?`
+        }
+        onConfirm={executeCategoryDelete}
+        onCancel={cancelCategoryDelete}
+        confirmText="Delete Category"
+        cancelText="Cancel"
+      />
+
+      {/* About Modal */}
+      <AboutModal
+        isOpen={showAbout}
+        onClose={() => setShowAbout(false)}
       />
     </div>
   );
