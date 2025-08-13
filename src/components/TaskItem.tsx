@@ -124,35 +124,55 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               </p>
             )}
 
-            {/* Meta information */}
-            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-              {/* Priority */}
-              <div className={cn(
-                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border',
-                getPriorityColor(task.priority)
-              )}>
-                {task.priority}
+            {/* Meta information - restructured with due date prominence */}
+            <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/30">
+              <div className="flex items-center gap-3 text-xs">
+                {/* Priority */}
+                <div className={cn(
+                  'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border',
+                  getPriorityColor(task.priority)
+                )}>
+                  {task.priority}
+                </div>
+
+                {/* Tags */}
+                {task.tags.length > 0 && (
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Tag className="w-3 h-3" />
+                    <span>{task.tags.slice(0, 2).join(', ')}</span>
+                    {task.tags.length > 2 && <span>+{task.tags.length - 2}</span>}
+                  </div>
+                )}
               </div>
 
-              {/* Due date */}
-              {task.due_date && (
-                <div className={cn(
-                  'inline-flex items-center gap-1',
-                  isTaskOverdue && 'text-destructive'
-                )}>
-                  <Calendar className="w-3 h-3" />
-                  <span>{formatDate(task.due_date)}</span>
-                </div>
-              )}
-
-              {/* Tags */}
-              {task.tags.length > 0 && (
-                <div className="flex items-center gap-1">
-                  <Tag className="w-3 h-3" />
-                  <span>{task.tags.slice(0, 2).join(', ')}</span>
-                  {task.tags.length > 2 && <span>+{task.tags.length - 2}</span>}
-                </div>
-              )}
+              {/* Due Date Column - More prominent display */}
+              <div className="flex flex-col items-end text-right">
+                {task.due_date ? (
+                  <>
+                    <div className={cn(
+                      'inline-flex items-center gap-1 text-xs font-medium',
+                      isTaskOverdue ? 'text-destructive' : 'text-muted-foreground'
+                    )}>
+                      <Calendar className="w-3 h-3" />
+                      <span>Due Date</span>
+                    </div>
+                    <div className={cn(
+                      'text-sm font-semibold mt-0.5',
+                      isTaskOverdue 
+                        ? 'text-destructive' 
+                        : task.completed 
+                        ? 'text-muted-foreground line-through' 
+                        : 'text-foreground'
+                    )}>
+                      {formatDate(task.due_date)}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-xs text-muted-foreground italic">
+                    No due date
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
