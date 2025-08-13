@@ -5,6 +5,7 @@ import { TaskForm } from './components/TaskForm';
 import { CategoryForm } from './components/CategoryForm';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { SortDropdown } from './components/SortDropdown';
+import { AboutModal } from './components/AboutModal';
 import { Modal } from './components/ui/Modal';
 import { Button } from './components/ui/Button';
 import { Input } from './components/ui/Input';
@@ -18,6 +19,7 @@ function App() {
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | undefined>();
+  const [showAbout, setShowAbout] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [darkMode, setDarkMode] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; taskId: string | null }>({
@@ -270,6 +272,7 @@ function App() {
         onCreateCategory={handleCreateCategory}
         onEditCategory={handleEditCategory}
         onDeleteCategory={handleDeleteCategory}
+        onShowAbout={() => setShowAbout(true)}
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
       />
@@ -567,6 +570,12 @@ function App() {
         onCancel={cancelCategoryDelete}
         confirmText="Delete Category"
         cancelText="Cancel"
+      />
+
+      {/* About Modal */}
+      <AboutModal
+        isOpen={showAbout}
+        onClose={() => setShowAbout(false)}
       />
     </div>
   );

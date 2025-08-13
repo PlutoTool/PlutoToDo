@@ -16,7 +16,7 @@ pub struct Task {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum Priority {
     Low,
     Medium,
@@ -79,9 +79,51 @@ pub struct TaskFilter {
     pub category_id: Option<String>,
     pub parent_id: Option<String>,
     pub search_query: Option<String>,
-    pub due_before: Option<NaiveDateTime>,
-    pub due_after: Option<NaiveDateTime>,
+    pub due_before: Option<String>, // Accept as string and parse later
+    pub due_after: Option<String>,  // Accept as string and parse later
     pub no_category: Option<bool>, // true means filter for tasks with no category
+}
+
+impl TaskFilter {
+    pub fn parse_due_before(&self) -> Option<NaiveDateTime> {
+        self.due_before.as_ref().and_then(|d| {
+            if d.is_empty() {
+                return None;
+            }
+            
+            use chrono::DateTime;
+            
+            // Try parsing as full ISO 8601 datetime
+            DateTime::parse_from_rfc3339(d)
+                .or_else(|_| {
+                    // Try parsing as date only (YYYY-MM-DD) and add time
+                    let datetime_str = format!("{}T23:59:59Z", d);
+                    DateTime::parse_from_rfc3339(&datetime_str)
+                })
+                .ok()
+                .map(|dt| dt.naive_utc())
+        })
+    }
+
+    pub fn parse_due_after(&self) -> Option<NaiveDateTime> {
+        self.due_after.as_ref().and_then(|d| {
+            if d.is_empty() {
+                return None;
+            }
+            
+            use chrono::DateTime;
+            
+            // Try parsing as full ISO 8601 datetime
+            DateTime::parse_from_rfc3339(d)
+                .or_else(|_| {
+                    // Try parsing as date only (YYYY-MM-DD) and add time
+                    let datetime_str = format!("{}T00:00:00Z", d);
+                    DateTime::parse_from_rfc3339(&datetime_str)
+                })
+                .ok()
+                .map(|dt| dt.naive_utc())
+        })
+    }
 }
 
 impl Task {

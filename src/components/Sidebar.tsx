@@ -4,14 +4,15 @@ import {
   Home, 
   Calendar, 
   CheckSquare, 
-  Clock, 
+  Circle,
   Plus,
   Moon,
   Sun,
-  MoreVertical,
   Edit2,
   Trash2,
-  Inbox
+  Inbox,
+  AlertTriangle,
+  Info
 } from 'lucide-react';
 import { useCategoryStore } from '../stores/categoryStore';
 import { useTaskStore } from '../stores/taskStore';
@@ -21,6 +22,7 @@ interface SidebarProps {
   onCreateCategory?: () => void;
   onEditCategory?: (category: any) => void;
   onDeleteCategory?: (categoryId: string) => void;
+  onShowAbout?: () => void;
   darkMode?: boolean;
   onToggleDarkMode?: () => void;
 }
@@ -30,6 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCreateCategory,
   onEditCategory,
   onDeleteCategory,
+  onShowAbout,
   darkMode,
   onToggleDarkMode 
 }) => {
@@ -48,8 +51,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       label: 'All Tasks',
       icon: Home,
-      onClick: () => handleFilterChange({ completed: undefined, category_id: undefined, no_category: undefined }),
-      active: !filter.completed && !filter.category_id && !filter.no_category,
+      onClick: () => handleFilterChange({ completed: undefined, category_id: undefined, no_category: undefined, due_before: undefined, due_after: undefined }),
+      active: !filter.completed && !filter.category_id && !filter.no_category && !filter.due_before && !filter.due_after,
     },
     {
       label: 'Today',
@@ -64,18 +67,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
           no_category: undefined
         });
       },
+      active: filter.due_after && filter.due_before && 
+              filter.due_after.startsWith(new Date().toISOString().split('T')[0]) &&
+              filter.due_before.startsWith(new Date().toISOString().split('T')[0]),
+    },
+    {
+      label: 'Overdue',
+      icon: AlertTriangle,
+      onClick: () => {
+        const now = new Date().toISOString();
+        handleFilterChange({ 
+          due_before: now,
+          completed: false, // Only show incomplete overdue tasks
+          category_id: undefined,
+          no_category: undefined,
+          due_after: undefined
+        });
+      },
+      active: filter.due_before && filter.completed === false && !filter.due_after && 
+              new Date(filter.due_before) < new Date(),
     },
     {
       label: 'Completed',
       icon: CheckSquare,
-      onClick: () => handleFilterChange({ completed: true, category_id: undefined, no_category: undefined }),
+      onClick: () => handleFilterChange({ completed: true, category_id: undefined, no_category: undefined, due_before: undefined, due_after: undefined }),
       active: filter.completed === true,
     },
     {
       label: 'Pending',
-      icon: Clock,
-      onClick: () => handleFilterChange({ completed: false, category_id: undefined, no_category: undefined }),
-      active: filter.completed === false && !filter.category_id && !filter.no_category,
+      icon: Circle,
+      onClick: () => handleFilterChange({ completed: false, category_id: undefined, no_category: undefined, due_before: undefined, due_after: undefined }),
+      active: filter.completed === false && !filter.category_id && !filter.no_category && !filter.due_before && !filter.due_after,
     },
   ];
 
@@ -139,7 +161,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => handleFilterChange({ 
                 category_id: undefined, 
                 completed: undefined, 
-                no_category: true 
+                no_category: true,
+                due_before: undefined,
+                due_after: undefined
               })}
             >
               <Inbox className="w-3 h-3 mr-2 text-muted-foreground" />
@@ -158,7 +182,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => handleFilterChange({ 
                     category_id: category.id, 
                     completed: undefined, 
-                    no_category: undefined 
+                    no_category: undefined,
+                    due_before: undefined,
+                    due_after: undefined
                   })}
                 >
                   <div 
@@ -216,6 +242,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
               Dark Mode
             </>
           )}
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start"
+          onClick={onShowAbout}
+        >
+          <Info className="w-4 h-4 mr-2" />
+          About
         </Button>
       </div>
     </div>
