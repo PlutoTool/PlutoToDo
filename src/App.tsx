@@ -99,16 +99,9 @@ function App() {
     setEditingTask(undefined);
   };
 
-  const handleDeleteTask = async (id: string) => {
+  const handleDeleteTask = (id: string) => {
     console.log('Delete task called with id:', id);
-    // Temporarily skip confirmation for testing
-    try {
-      console.log('Calling deleteTask from store...');
-      await deleteTask(id);
-      console.log('Task deleted successfully');
-    } catch (error) {
-      console.error('Failed to delete task:', error);
-    }
+    setConfirmDelete({ isOpen: true, taskId: id });
   };
 
   const confirmDeleteTask = async () => {
