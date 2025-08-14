@@ -289,7 +289,7 @@ We welcome contributions! Please follow these steps:
 
 ### Getting Started
 1. **Fork the repository** on GitHub
-2. **Clone your fork** locally: `git clone https://github.com/yourusername/PlutoToDo.git`
+2. **Clone your fork** locally: `git clone https://github.com/PlutoTool/PlutoToDo.git`
 3. **Create a feature branch**: `git checkout -b feature/your-feature-name`
 4. **Install dependencies**: `npm install --legacy-peer-deps`
 5. **Start development**: `npm run tauri dev`
