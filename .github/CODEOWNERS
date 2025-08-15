@@ -1,0 +1,32 @@
+# CODEOWNERS file for PlutoToDo
+# This file defines who owns different parts of the codebase
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owners - these users will be requested for review on all PRs
+* @cuongdinh98
+
+# Frontend React/TypeScript code
+src/ @cuongdinh98
+*.tsx @cuongdinh98
+*.ts @cuongdinh98
+ß
+# Tauri/Rust backend code
+src-tauri/ @cuongdinh98
+*.rs @cuongdinh98
+Cargo.toml @cuongdinh98
+Cargo.lock @cuongdinh98
+
+# Configuration files
+*.json @cuongdinh98
+*.js @cuongdinh98
+*.config.* @cuongdinh98
+tsconfig*.json @cuongdinh98
+vite.config.ts @cuongdinh98
+tailwind.config.js @cuongdinh98
+
+# Documentation
+*.md @cuongdinh98
+LICENSE @cuongdinh98
+
+# GitHub workflows and configuration
+.github/ @cuongdinh98
