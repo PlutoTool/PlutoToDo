@@ -20,6 +20,7 @@ You can access information about PlutoTool directly from the application by clic
 ## 🆕 Recent Updates
 
 ### Latest Features (v1.0.0)
+- **🔄 Automatic Update Checker** - Check for new releases directly from the sidebar
 - **ℹ️ About Section** - New About modal with PlutoTool information and website link
 - **✨ Advanced Sorting System** - Sort tasks by multiple fields with ascending/descending options
 - **🔄 Bulk Operations** - Select and manage multiple tasks simultaneously
@@ -49,6 +50,7 @@ You can access information about PlutoTool directly from the application by clic
 ### 🎨 User Experience
 - **Space-themed Design** - Cosmic color palette with deep blues and purples
 - **Dark Mode Support** - Automatic system preference detection with manual toggle
+- **Update Notifications** - Automatic update checking with detailed release notes and one-click downloads
 - **About Modal** - Accessible information about the app and PlutoTool with direct website link
 - **Responsive Design** - Optimized for desktop, tablet, and mobile
 - **Smooth Animations** - Micro-interactions and transitions for better UX
@@ -63,7 +65,30 @@ You can access information about PlutoTool directly from the application by clic
 - **Batch Operations** - Efficient bulk operations for improved performance
 - **Smart Caching** - Intelligent data caching for faster user interactions
 
-## 🚀 Quick Start
+## � Update System
+
+### How Updates Work
+PlutoToDo includes an intelligent update checking system that:
+
+- **Automatic Checking**: Checks for updates on app startup with 1-hour caching
+- **GitHub Integration**: Fetches releases from https://github.com/PlutoTool/PlutoToDo/releases
+- **Smart Notifications**: Shows update button in sidebar when new version is available
+- **Version Comparison**: Uses semantic versioning to compare current vs. latest releases
+- **Release Notes**: Displays detailed changelog and new features in update modal
+- **One-Click Downloads**: Direct link to GitHub releases for easy updates
+
+### Update Process
+1. **Check for Updates**: Click "Check for Updates" in the sidebar or wait for automatic check
+2. **View Details**: If update available, click the highlighted update button to see release notes
+3. **Download**: Click "Download Update" to visit the GitHub releases page
+4. **Install**: Download and install the appropriate installer for your platform
+
+### Update Settings
+- **Caching**: Update checks are cached for 1 hour to avoid excessive API calls
+- **Privacy**: No personal data is transmitted during update checks
+- **Offline Mode**: App works normally when update checks fail due to network issues
+
+## �🚀 Quick Start
 
 ### Prerequisites
 

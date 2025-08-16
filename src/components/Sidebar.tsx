@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from './ui/Button';
 import { 
   Home, 
@@ -12,10 +12,14 @@ import {
   Trash2,
   Inbox,
   AlertTriangle,
-  Info
+  Info,
+  Download,
+  RefreshCw
 } from 'lucide-react';
 import { useCategoryStore } from '../stores/categoryStore';
 import { useTaskStore } from '../stores/taskStore';
+import { useUpdateChecker } from '../hooks/useUpdateChecker';
+import { UpdateModal } from './UpdateModal';
 
 interface SidebarProps {
   onCreateTask?: () => void;
@@ -38,6 +42,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { categories, loadCategories } = useCategoryStore();
   const { setFilter, filter } = useTaskStore();
+  const { updateInfo, isChecking, checkForUpdates, error } = useUpdateChecker();
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showUpdateResult, setShowUpdateResult] = useState(false);
+
+  const handleCheckForUpdates = async () => {
+    await checkForUpdates();
+    setShowUpdateResult(true);
+  };
 
   useEffect(() => {
     loadCategories();
@@ -106,7 +118,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Header */}
       <div className="p-4 border-b border-border">
         <h1 className="text-lg font-semibold text-foreground">Pluto: To-do</h1>
-        <p className="text-xs text-muted-foreground">Organize your universe</p>
+        <p className="text-xs text-muted-foreground">
+          Organize your universe
+          <span className="ml-2 opacity-60">v{updateInfo?.currentVersion || '1.0.0'}</span>
+        </p>
       </div>
 
       {/* Quick Actions */}
@@ -225,6 +240,59 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Footer */}
       <div className="p-4 border-t border-border space-y-2">
+        {/* Update Check */}
+        <div className="space-y-2">
+          {updateInfo?.hasUpdate ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="w-full justify-start text-primary border-primary/20 bg-primary/10 hover:bg-primary/20"
+              onClick={() => setShowUpdateModal(true)}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Update Available (v{updateInfo.latestVersion})
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start"
+              onClick={handleCheckForUpdates}
+              disabled={isChecking}
+              title={error ? `Error: ${error}` : updateInfo ? (updateInfo.latestVersion ? 'You have the latest version' : 'No releases published yet') : 'Check for updates'}
+            >
+              {isChecking ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Checking for updates...
+                </>
+              ) : error ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 text-destructive" />
+                  Check for Updates
+                </>
+              ) : updateInfo ? (
+                updateInfo.latestVersion ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 text-green-500" />
+                    Check for Updates
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 text-orange-500" />
+                    Check for Updates
+                  </>
+                )
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Check for Updates
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+        
         <Button
           variant="ghost"
           size="sm"
@@ -254,6 +322,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           About
         </Button>
       </div>
+
+      {/* Update Modal */}
+      {updateInfo && (showUpdateModal || showUpdateResult) && (
+        <UpdateModal
+          isOpen={showUpdateModal || showUpdateResult}
+          onClose={() => {
+            setShowUpdateModal(false);
+            setShowUpdateResult(false);
+          }}
+          updateInfo={updateInfo}
+        />
+      )}
     </div>
   );
 };
