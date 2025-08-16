@@ -1,6 +1,6 @@
 [package]
 name = "pluto-todo"
-version = "1.0.1"
+version = "1.0.0"
 description = "Pluto: To-do - A modern, elegant cross-platform todo application"
 authors = ["Pluto Development Team"]
 edition = "2021"
