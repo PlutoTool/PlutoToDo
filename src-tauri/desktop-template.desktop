@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name={{productName}}
+Comment=A modern, efficient task management application
+Exec={{executableName}} %U
+Icon=pluto-todo
+Terminal=false
+Categories=Office;Productivity;
+StartupWMClass={{productName}}
+MimeType=x-scheme-handler/{{productName}};
+Keywords=todo;task;productivity;planner;organizer;

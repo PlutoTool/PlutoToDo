@@ -1,0 +1,70 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Main planet gradient -->
+    <radialGradient id="planetGradient" cx="0.35" cy="0.35" r="0.8">
+      <stop offset="0%" style="stop-color:#9BB0D6;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#7A91B8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5A729A;stop-opacity:1" />
+    </radialGradient>
+    
+    <!-- Heart feature gradient -->
+    <radialGradient id="heartIcon" cx="0.4" cy="0.4" r="0.7">
+      <stop offset="0%" style="stop-color:#E8EDF7;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#D1DCF0;stop-opacity:0.7" />
+    </radialGradient>
+    
+    <!-- Checkmark gradient -->
+    <linearGradient id="checkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4CAF50;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#388E3C;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Task lines gradient -->
+    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#E8EDF7;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#D1DCF0;stop-opacity:0.6" />
+    </linearGradient>
+    
+    <!-- Subtle glow -->
+    <filter id="iconGlow">
+      <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background circle for app icon -->
+  <rect width="100" height="100" rx="22" ry="22" fill="#f8f9fa" opacity="0"/>
+  
+  <!-- Main Pluto sphere -->
+  <circle cx="50" cy="50" r="35" fill="url(#planetGradient)" filter="url(#iconGlow)"/>
+  
+  <!-- Iconic heart shape (simplified) -->
+  <path d="M 50 42
+           C 46 38, 40 38, 38 44
+           C 36 38, 30 38, 28 44
+           C 28 48, 34 54, 39 58
+           C 44 54, 50 48, 50 42 Z" 
+        fill="url(#heartIcon)"/>
+  
+  <!-- Todo list elements integrated into design -->
+  <!-- Task line 1 -->
+  <rect x="55" y="30" width="16" height="2" rx="1" fill="url(#lineGradient)"/>
+  <!-- Task line 2 -->
+  <rect x="55" y="35" width="12" height="2" rx="1" fill="url(#lineGradient)"/>
+  <!-- Task line 3 (completed with checkmark) -->
+  <rect x="60" y="40" width="10" height="2" rx="1" fill="url(#lineGradient)" opacity="0.5"/>
+  <circle cx="57" cy="41" r="2.5" fill="url(#checkGradient)"/>
+  <path d="M 55.5 41 L 56.5 42 L 58.5 39.5" stroke="white" stroke-width="1" fill="none" stroke-linecap="round"/>
+  
+  <!-- Additional surface detail -->
+  <ellipse cx="35" cy="60" rx="8" ry="6" fill="#6B82A4" opacity="0.4" transform="rotate(-20 35 60)"/>
+  
+  <!-- Subtle highlight -->
+  <ellipse cx="42" cy="42" rx="8" ry="12" fill="#B5C5E0" opacity="0.3" transform="rotate(-30 42 42)"/>
+  
+  <!-- Orbital accent (simplified) -->
+  <path d="M 20 50 Q 50 25, 80 50" stroke="#9BB0D6" stroke-width="1" fill="none" opacity="0.4"/>
+</svg>

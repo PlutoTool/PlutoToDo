@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "pluto-todo",
-  "version": "1.0.0",
-  "identifier": "com.dinhduycuong.pluto-todo",
+  "productName": "Pluto ToDo",
+  "version": "1.0.1",
+  "identifier": "com.plutotool.pluto-todo",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "pluto-todo",
+        "title": "Pluto ToDo",
         "width": 800,
         "height": 600
       }
@@ -24,9 +24,57 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "category": "Productivity",
+    "shortDescription": "Modern task management application",
+    "longDescription": "Pluto ToDo is a modern, elegant cross-platform todo application designed for productivity and task management.",
     "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico",
+      "icons/16x16.png",
+      "icons/48x48.png",
+      "icons/64x64.png",
+      "icons/256x256.png",
+      "icons/512x512.png",
       "icons/PlutoTodo.png",
-      "icons/PlutoTodo.ico"
-    ]
+      "icons/PlutoTodo.svg"
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": null,
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      },
+      "allowDowngrades": false,
+      "wix": {
+        "language": ["en-US"]
+      },
+      "nsis": {
+        "languages": ["English"],
+        "displayLanguageSelector": false,
+        "installMode": "currentUser",
+        "startMenuFolder": "Pluto ToDo",
+        "installerIcon": "icons/PlutoTodo.ico"
+      }
+    },
+    "linux": {
+      "deb": {
+        "depends": [],
+        "files": {
+          "/usr/share/applications/": "desktop-template.desktop",
+          "/usr/share/icons/hicolor/16x16/apps/": "icons/16x16.png=pluto-todo.png",
+          "/usr/share/icons/hicolor/32x32/apps/": "icons/32x32.png=pluto-todo.png",
+          "/usr/share/icons/hicolor/48x48/apps/": "icons/48x48.png=pluto-todo.png",
+          "/usr/share/icons/hicolor/64x64/apps/": "icons/64x64.png=pluto-todo.png",
+          "/usr/share/icons/hicolor/128x128/apps/": "icons/128x128.png=pluto-todo.png",
+          "/usr/share/icons/hicolor/256x256/apps/": "icons/256x256.png=pluto-todo.png",
+          "/usr/share/icons/hicolor/512x512/apps/": "icons/512x512.png=pluto-todo.png",
+          "/usr/share/icons/hicolor/scalable/apps/": "icons/PlutoTodo.svg=pluto-todo.svg"
+        }
+      }
+    }
   }
 }
