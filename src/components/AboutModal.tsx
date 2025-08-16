@@ -125,7 +125,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
         {/* Version Info */}
         <div className="text-center pt-4 border-t border-border">
           <p className="text-xs text-muted-foreground">
-            Version 1.0.0 • Made with ❤️ by PlutoTool
+            Version 1.0.1 • Made with ❤️ by PlutoTool
           </p>
         </div>
       </div>

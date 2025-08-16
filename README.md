@@ -19,7 +19,7 @@ You can access information about PlutoTool directly from the application by clic
 
 ## 🆕 Recent Updates
 
-### Latest Features (v1.0.0)
+### Latest Features (v1.0.1)
 - **🔄 Automatic Update Checker** - Check for new releases directly from the sidebar
 - **ℹ️ About Section** - New About modal with PlutoTool information and website link
 - **✨ Advanced Sorting System** - Sort tasks by multiple fields with ascending/descending options
