@@ -120,7 +120,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <h1 className="text-lg font-semibold text-foreground">Pluto: To-do</h1>
         <p className="text-xs text-muted-foreground">
           Organize your universe
-          <span className="ml-2 opacity-60">v{updateInfo?.currentVersion || '1.0.0'}</span>
+          <span className="ml-2 opacity-60">{updateInfo?.currentVersion ? (updateInfo.currentVersion.startsWith('v') ? updateInfo.currentVersion : `v${updateInfo.currentVersion}`) : 'v1.0.0'}</span>
         </p>
       </div>
 

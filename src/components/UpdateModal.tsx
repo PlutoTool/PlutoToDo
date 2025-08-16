@@ -15,9 +15,27 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
   onClose,
   updateInfo,
 }) => {
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (updateInfo.releaseUrl) {
-      window.open(updateInfo.releaseUrl, '_blank');
+      console.log('Attempting to open release URL:', updateInfo.releaseUrl);
+      try {
+        // Import the openUrl function from Tauri's opener plugin
+        const { openUrl } = await import('@tauri-apps/plugin-opener');
+        console.log('openUrl function imported successfully');
+        await openUrl(updateInfo.releaseUrl);
+        console.log('Successfully opened release URL');
+      } catch (error) {
+        console.error('Failed to open release URL with Tauri opener:', error);
+        try {
+          // Fallback to window.open for development/web
+          console.log('Trying fallback with window.open');
+          window.open(updateInfo.releaseUrl, '_blank');
+          console.log('Opened with window.open fallback');
+        } catch (fallbackError) {
+          console.error('Fallback also failed:', fallbackError);
+          alert(`Could not open release page. Please visit ${updateInfo.releaseUrl} manually.`);
+        }
+      }
     }
   };
 
