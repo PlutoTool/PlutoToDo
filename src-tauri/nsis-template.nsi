@@ -30,6 +30,7 @@ RequestExecutionLevel user
 ; Pages
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
@@ -51,7 +52,10 @@ VIAddVersionKey "LegalCopyright" "© ${COMPANYNAME}"
 VIAddVersionKey "FileDescription" "${DESCRIPTION}"
 VIAddVersionKey "FileVersion" "${VERSION}"
 
-Section "Install" SecInstall
+Section "!${APPNAME}" SecInstall
+    ; This section is required
+    SectionIn RO
+    
     ; Set output path to the installation directory
     SetOutPath $INSTDIR
     
@@ -65,9 +69,6 @@ Section "Install" SecInstall
         CreateShortcut "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APPNAME}.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
     !insertmacro MUI_STARTMENU_WRITE_END
     
-    ; Create desktop shortcut (optional)
-    CreateShortcut "$DESKTOP\${APPNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe" "" "$INSTDIR\${MAINBINARYNAME}.exe" 0
-    
     ; Write registry keys for Add/Remove Programs
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME}"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString" "$INSTDIR\uninstall.exe"
@@ -76,8 +77,25 @@ Section "Install" SecInstall
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayVersion" "${VERSION}"
     
     ; Create uninstaller
-    WriteUninstaller "$INSTDIR\uninstall.exe"
+    WriteUninstaller "$INSTDIR\uninstaller.exe"
 SectionEnd
+
+Section "Desktop Shortcut" SecDesktop
+    ; This section is optional and selected by default
+    CreateShortcut "$DESKTOP\${APPNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe" "" "$INSTDIR\${MAINBINARYNAME}.exe" 0
+SectionEnd
+
+; Section descriptions
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecInstall} "Core application files (required)"
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} "Create a shortcut on the desktop for easy access"
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+; Set desktop shortcut as selected by default
+Function .onInit
+    ; Select the desktop shortcut section by default
+    !insertmacro SelectSection ${SecDesktop}
+FunctionEnd
 
 Section "Uninstall"
     ; Remove Start Menu shortcuts
@@ -86,7 +104,7 @@ Section "Uninstall"
     Delete "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APPNAME}.lnk"
     RMDir "$SMPROGRAMS\$StartMenuFolder"
     
-    ; Remove desktop shortcut
+    ; Remove desktop shortcut if it exists
     Delete "$DESKTOP\${APPNAME}.lnk"
     
     ; Remove registry keys
