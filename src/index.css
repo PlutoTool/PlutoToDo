@@ -181,3 +181,27 @@
 .zoom-in-95 {
   animation-name: zoom-in;
 }
+
+/* Custom styles for date picker details/summary */
+details summary {
+  list-style: none;
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+details[open] summary {
+  margin-bottom: 0.5rem;
+}
+
+details summary::after {
+  content: '▼';
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+  transition: transform 0.2s ease;
+}
+
+details[open] summary::after {
+  transform: rotate(180deg);
+}

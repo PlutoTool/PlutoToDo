@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
+import { DatePicker } from './ui/DatePicker';
 import { Task, CreateTaskRequest, UpdateTaskRequest, Priority } from '../types';
 import { useTaskStore } from '../stores/taskStore';
 import { useCategoryStore } from '../stores/categoryStore';
@@ -172,11 +173,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
                 <label htmlFor="dueDate" className="text-sm font-medium mb-1 block">
                   Due Date
                 </label>
-                <Input
-                  id="dueDate"
-                  type="date"
+                <DatePicker
                   value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
+                  onChange={(value) => setDueDate(value)}
+                  placeholder="Select due date..."
                 />
               </div>
               <div>
