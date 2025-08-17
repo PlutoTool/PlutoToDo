@@ -11,11 +11,12 @@ import { format } from 'date-fns';
 
 interface TaskFormProps {
   task?: Task;
+  parentId?: string; // For creating subtasks
   onSubmit?: () => void;
   onCancel?: () => void;
 }
 
-export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
+export const TaskForm: React.FC<TaskFormProps> = ({ task, parentId, onSubmit, onCancel }) => {
   const { createTask, updateTask } = useTaskStore();
   const { categories, loadCategories } = useCategoryStore();
   
@@ -70,6 +71,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
         due_date: dueDateString,
         category_id: categoryId || undefined,
         tags: tags.length > 0 ? tags : undefined,
+        parent_id: parentId, // Include parent_id for subtasks
       };
 
       if (task) {

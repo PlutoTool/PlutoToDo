@@ -17,6 +17,7 @@ import { useCategoryStore } from './stores/categoryStore';
 function App() {
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [parentTaskId, setParentTaskId] = useState<string | undefined>(); // For subtask creation
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | undefined>();
   const [showAbout, setShowAbout] = useState(false);
@@ -81,22 +82,32 @@ function App() {
 
   const handleCreateTask = () => {
     setEditingTask(undefined);
+    setParentTaskId(undefined);
     setShowTaskForm(true);
   };
 
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
+    setParentTaskId(undefined);
+    setShowTaskForm(true);
+  };
+
+  const handleCreateSubtask = (parentId: string) => {
+    setEditingTask(undefined);
+    setParentTaskId(parentId);
     setShowTaskForm(true);
   };
 
   const handleFormSubmit = () => {
     setShowTaskForm(false);
     setEditingTask(undefined);
+    setParentTaskId(undefined);
   };
 
   const handleFormCancel = () => {
     setShowTaskForm(false);
     setEditingTask(undefined);
+    setParentTaskId(undefined);
   };
 
   const handleDeleteTask = (id: string) => {
@@ -316,6 +327,7 @@ function App() {
               <TaskList 
                 onEditTask={handleEditTask}
                 onDeleteTask={handleDeleteTask}
+                onAddSubtask={handleCreateSubtask}
                 selectedTasks={selectedTasks}
                 onToggleTaskSelect={handleToggleTaskSelect}
               />
@@ -486,11 +498,12 @@ function App() {
       <Modal
         isOpen={showTaskForm}
         onClose={handleFormCancel}
-        title={editingTask ? 'Edit Task' : 'Create New Task'}
+        title={editingTask ? 'Edit Task' : parentTaskId ? 'Create Subtask' : 'Create New Task'}
         size="lg"
       >
         <TaskForm 
           task={editingTask}
+          parentId={parentTaskId}
           onSubmit={handleFormSubmit}
           onCancel={handleFormCancel}
         />

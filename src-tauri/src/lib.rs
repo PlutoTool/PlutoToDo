@@ -37,6 +37,13 @@ pub fn run() {
             toggle_task_completion,
             search_tasks,
             get_tasks_by_category,
+            // New subtask commands
+            get_subtasks,
+            get_task_hierarchy,
+            get_task_with_subtasks,
+            calculate_task_progress,
+            get_incomplete_subtasks,
+            bulk_mark_subtasks_completed,
             // Category commands
             create_category,
             get_categories,
