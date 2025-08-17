@@ -10,13 +10,18 @@ import { Modal } from './components/ui/Modal';
 import { Button } from './components/ui/Button';
 import { Input } from './components/ui/Input';
 import { Task, Category } from './types';
-import { Search, Plus, X, Check, CheckCheck, Trash2, MoreHorizontal } from 'lucide-react';
+import { Search, Plus, X, Check, CheckCheck, Trash2, MoreHorizontal, Menu } from 'lucide-react';
 import { useTaskStore } from './stores/taskStore';
 import { useCategoryStore } from './stores/categoryStore';
+import { useSidebar } from './hooks/useSidebar';
 
 function App() {
+  // Sidebar management
+  const { isExpanded, isMobile, toggleSidebar, collapseSidebar } = useSidebar();
+  
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [parentTaskId, setParentTaskId] = useState<string | undefined>(); // For subtask creation
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | undefined>();
   const [showAbout, setShowAbout] = useState(false);
@@ -81,22 +86,32 @@ function App() {
 
   const handleCreateTask = () => {
     setEditingTask(undefined);
+    setParentTaskId(undefined);
     setShowTaskForm(true);
   };
 
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
+    setParentTaskId(undefined);
+    setShowTaskForm(true);
+  };
+
+  const handleCreateSubtask = (parentId: string) => {
+    setEditingTask(undefined);
+    setParentTaskId(parentId);
     setShowTaskForm(true);
   };
 
   const handleFormSubmit = () => {
     setShowTaskForm(false);
     setEditingTask(undefined);
+    setParentTaskId(undefined);
   };
 
   const handleFormCancel = () => {
     setShowTaskForm(false);
     setEditingTask(undefined);
+    setParentTaskId(undefined);
   };
 
   const handleDeleteTask = (id: string) => {
@@ -261,21 +276,35 @@ function App() {
     <div className="h-screen flex bg-background text-foreground">
       {/* Sidebar */}
       <Sidebar 
+        isExpanded={isExpanded}
+        isMobile={isMobile}
         onCreateTask={handleCreateTask}
         onCreateCategory={handleCreateCategory}
         onEditCategory={handleEditCategory}
         onDeleteCategory={handleDeleteCategory}
         onShowAbout={() => setShowAbout(true)}
+        onCollapse={collapseSidebar}
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <header className="border-b border-border p-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+              {/* Hamburger Menu Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleSidebar}
+                className="flex-shrink-0"
+                aria-label="Toggle sidebar"
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
+              
               <h2 className="text-xl font-semibold whitespace-nowrap">Tasks</h2>
               
               {/* Search */}
@@ -316,6 +345,7 @@ function App() {
               <TaskList 
                 onEditTask={handleEditTask}
                 onDeleteTask={handleDeleteTask}
+                onAddSubtask={handleCreateSubtask}
                 selectedTasks={selectedTasks}
                 onToggleTaskSelect={handleToggleTaskSelect}
               />
@@ -486,11 +516,12 @@ function App() {
       <Modal
         isOpen={showTaskForm}
         onClose={handleFormCancel}
-        title={editingTask ? 'Edit Task' : 'Create New Task'}
+        title={editingTask ? 'Edit Task' : parentTaskId ? 'Create Subtask' : 'Create New Task'}
         size="lg"
       >
         <TaskForm 
           task={editingTask}
+          parentId={parentTaskId}
           onSubmit={handleFormSubmit}
           onCancel={handleFormCancel}
         />

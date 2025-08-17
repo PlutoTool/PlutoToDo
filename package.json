@@ -1,7 +1,7 @@
 {
   "name": "pluto-todo",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.1.0",
   "type": "module",
   "description": "Pluto: To-do - A modern, elegant cross-platform todo application",
   "scripts": {

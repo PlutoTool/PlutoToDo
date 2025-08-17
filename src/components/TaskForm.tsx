@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
+import { DatePicker } from './ui/DatePicker';
 import { Task, CreateTaskRequest, UpdateTaskRequest, Priority } from '../types';
 import { useTaskStore } from '../stores/taskStore';
 import { useCategoryStore } from '../stores/categoryStore';
@@ -10,11 +11,12 @@ import { format } from 'date-fns';
 
 interface TaskFormProps {
   task?: Task;
+  parentId?: string; // For creating subtasks
   onSubmit?: () => void;
   onCancel?: () => void;
 }
 
-export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
+export const TaskForm: React.FC<TaskFormProps> = ({ task, parentId, onSubmit, onCancel }) => {
   const { createTask, updateTask } = useTaskStore();
   const { categories, loadCategories } = useCategoryStore();
   
@@ -69,6 +71,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
         due_date: dueDateString,
         category_id: categoryId || undefined,
         tags: tags.length > 0 ? tags : undefined,
+        parent_id: parentId, // Include parent_id for subtasks
       };
 
       if (task) {
@@ -172,11 +175,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
                 <label htmlFor="dueDate" className="text-sm font-medium mb-1 block">
                   Due Date
                 </label>
-                <Input
-                  id="dueDate"
-                  type="date"
+                <DatePicker
                   value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
+                  onChange={(value) => setDueDate(value)}
+                  placeholder="Select due date..."
                 />
               </div>
               <div>

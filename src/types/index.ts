@@ -10,6 +10,24 @@ export interface Task {
   parent_id?: string; // For subtasks
   created_at: string; // ISO string
   updated_at: string; // ISO string
+  // Computed properties for UI
+  subtasks?: Task[];
+  progress?: TaskProgress;
+  depth?: number; // For rendering nested structure
+  isExpanded?: boolean; // For UI state
+}
+
+export interface TaskProgress {
+  total_subtasks: number;
+  completed_subtasks: number;
+  progress_percentage: number;
+  has_subtasks: boolean;
+}
+
+export interface TaskHierarchy {
+  task: Task;
+  children: TaskHierarchy[];
+  depth: number;
 }
 
 export enum Priority {

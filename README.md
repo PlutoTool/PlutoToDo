@@ -5,7 +5,7 @@ A modern, elegant, and feature-rich cross-platform todo application built with R
 ![Pluto: To-do](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)
 ![Tech Stack](https://img.shields.io/badge/Tech-Tauri%202%20%7C%20React%20%7C%20TypeScript-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
-![Version](https://img.shields.io/badge/Version-1.0.0-orange)
+![Version](https://img.shields.io/badge/Version-1.1.0-orange)
 
 ## 🌟 About PlutoTool
 
@@ -19,11 +19,15 @@ You can access information about PlutoTool directly from the application by clic
 
 ## 🆕 Recent Updates
 
-### Latest Features (v1.0.1)
+### Latest Features (v1.1.0)
 - **🔄 Automatic Update Checker** - Check for new releases directly from the sidebar
 - **ℹ️ About Section** - New About modal with PlutoTool information and website link
 - **✨ Advanced Sorting System** - Sort tasks by multiple fields with ascending/descending options
 - **🔄 Bulk Operations** - Select and manage multiple tasks simultaneously
+- **🌳 Enhanced Subtask System** - Hierarchical task management with progress tracking and smart completion
+- **📊 Task Progress Indicators** - Visual progress bars for parent tasks showing subtask completion
+- **🎯 Smart Task Completion** - Intelligent completion handling for tasks with incomplete subtasks
+- **📱 Responsive Bulk Actions** - Mobile-optimized floating action buttons and bottom sheets
 - **📊 Enhanced UI Components** - Improved dropdowns, modals, and form controls
 - **⚡ Performance Optimizations** - Faster task rendering and state management
 - **🎨 Better Visual Feedback** - Enhanced icons, animations, and user interactions
@@ -34,6 +38,9 @@ You can access information about PlutoTool directly from the application by clic
 - **Create, Edit, Delete Tasks** - Full CRUD operations with intuitive interface
 - **Task Completion** - Toggle completion status with visual feedback and one-click actions
 - **Subtasks Support** - Organize complex tasks with nested subtasks (2 levels deep)
+- **Hierarchical Task Management** - Expandable/collapsible tree view for task organization
+- **Task Progress Tracking** - Visual progress indicators showing subtask completion percentages
+- **Smart Task Completion** - Intelligent handling when completing tasks with incomplete subtasks
 - **Priority Levels** - High, Medium, Low priority with color coding and visual indicators
 - **Due Dates** - Calendar picker with overdue indicators and smart reminders
 - **Rich Descriptions** - Detailed task descriptions with markdown support
@@ -53,6 +60,10 @@ You can access information about PlutoTool directly from the application by clic
 - **Update Notifications** - Automatic update checking with detailed release notes and one-click downloads
 - **About Modal** - Accessible information about the app and PlutoTool with direct website link
 - **Responsive Design** - Optimized for desktop, tablet, and mobile
+- **Mobile-Optimized Bulk Actions** - Floating action buttons for desktop, bottom sheets for mobile
+- **Expandable Task Hierarchy** - Collapsible tree view with visual depth indicators
+- **Subtask Completion Modal** - Smart dialog for handling incomplete subtasks
+- **Real-time Progress Indicators** - Live updating progress bars for parent tasks
 - **Smooth Animations** - Micro-interactions and transitions for better UX
 - **Keyboard Shortcuts** - Power user features for efficient navigation
 
@@ -151,6 +162,7 @@ The application will launch automatically in development mode with hot reload en
 - **Date Utilities**: date-fns for robust date manipulation and formatting
 - **Form Handling**: React Hook Form with Zod validation for type-safe forms
 - **Animations**: React Spring for smooth micro-interactions and transitions
+- **Update System**: Custom update checker with GitHub API integration and caching
 
 ### Project Structure
 ```
@@ -165,23 +177,35 @@ pluto-todo/
 │   │   │   ├── migrations.rs # Database schema migrations
 │   │   │   └── repository.rs # Data access layer
 │   │   ├── commands/         # Tauri commands (API endpoints)
-│   │   │   ├── task_commands.rs
-│   │   │   └── category_commands.rs
+│   │   │   ├── task_commands.rs # Task CRUD and hierarchy operations
+│   │   │   └── category_commands.rs # Category management
 │   │   └── utils/            # Utility functions and error handling
 │   ├── Cargo.toml           # Rust dependencies
 │   └── tauri.conf.json      # Tauri configuration
 ├── src/                      # React frontend
 │   ├── components/          # React components
-│   │   ├── ui/             # Base UI components
-│   │   ├── TaskItem.tsx    # Individual task display
-│   │   ├── TaskList.tsx    # Task list container
+│   │   ├── ui/             # Base UI components (Button, Modal, etc.)
+│   │   ├── TaskItem.tsx    # Individual task display (legacy)
+│   │   ├── SubtaskItem.tsx # Enhanced hierarchical task display
+│   │   ├── TaskList.tsx    # Task list container with bulk operations
 │   │   ├── TaskForm.tsx    # Task creation/editing form
-│   │   └── Sidebar.tsx     # Navigation sidebar
+│   │   ├── SortDropdown.tsx # Advanced sorting controls
+│   │   ├── SubtaskCompletionModal.tsx # Smart completion dialog
+│   │   ├── AboutModal.tsx  # Application information modal
+│   │   └── Sidebar.tsx     # Navigation sidebar with update checker
 │   ├── stores/             # Zustand state management
-│   │   ├── taskStore.ts    # Task-related state
+│   │   ├── taskStore.ts    # Task-related state with hierarchy support
 │   │   └── categoryStore.ts # Category-related state
-│   ├── types/              # TypeScript type definitions
+│   ├── hooks/              # Custom React hooks
+│   │   ├── useSidebar.ts   # Sidebar state management
+│   │   └── useUpdateChecker.ts # Update checking functionality
 │   ├── utils/              # Utility functions
+│   │   ├── taskHierarchy.ts # Task relationship and progress utilities
+│   │   ├── updateChecker.ts # GitHub API integration for updates
+│   │   ├── dateUtils.ts    # Date formatting and manipulation
+│   │   ├── priorityUtils.ts # Priority color and display utilities
+│   │   └── cn.ts          # Tailwind class name utilities
+│   ├── types/              # TypeScript type definitions
 │   └── styles/             # CSS and styling
 ├── public/                   # Static assets
 ├── package.json             # Node.js dependencies and scripts
@@ -207,9 +231,16 @@ pluto-todo/
 - `priority` (TEXT, DEFAULT 'Medium') - Priority level enum (Low/Medium/High)
 - `due_date` (DATETIME) - Optional deadline with timezone support
 - `category_id` (TEXT) - Foreign key reference to categories table
-- `parent_id` (TEXT) - Self-referencing foreign key for subtask hierarchy
+- `parent_id` (TEXT) - Self-referencing foreign key for subtask hierarchy (supports 2 levels deep)
 - `created_at` (DATETIME, DEFAULT CURRENT_TIMESTAMP) - Auto-generated creation timestamp
 - `updated_at` (DATETIME, DEFAULT CURRENT_TIMESTAMP) - Auto-updated modification timestamp
+
+#### `task_progress` (Virtual/Calculated)
+- `task_id` (TEXT) - Reference to parent task
+- `total_subtasks` (INTEGER) - Total number of direct and nested subtasks
+- `completed_subtasks` (INTEGER) - Number of completed subtasks
+- `progress_percentage` (REAL) - Calculated completion percentage (0-100)
+- `has_subtasks` (BOOLEAN) - Whether the task has any subtasks
 
 #### `task_tags`
 - `task_id` (TEXT) - Foreign key reference to tasks table
@@ -234,6 +265,8 @@ pluto-todo/
 - `Cmd/Ctrl + A` - Select all tasks
 - `Cmd/Ctrl + Shift + A` - Deselect all tasks
 - `Enter` - Confirm/submit forms
+- `Click Chevron` - Expand/collapse subtasks
+- `Shift + Click` - Bulk select range of tasks
 
 ### Sorting & Filtering
 - `Cmd/Ctrl + 1-6` - Quick sort by field (Name, Due Date, Created, Updated, Priority, Status)
@@ -252,6 +285,97 @@ pluto-todo/
 ### Typography
 - **Font Family**: Inter - Clean, modern sans-serif
 - **Font Weights**: 300 (Light), 400 (Regular), 500 (Medium), 600 (Semibold), 700 (Bold)
+
+## 🆕 New Features & Functions
+
+### 🌳 Enhanced Subtask System
+
+#### SubtaskItem Component
+The new `SubtaskItem` component provides hierarchical task display with advanced features:
+- **Expandable Tree View** - Click chevron icons to expand/collapse subtasks
+- **Progress Tracking** - Visual progress bars showing completion percentage
+- **Bulk Selection** - Checkbox selection for bulk operations
+- **Smart Completion** - Intelligent handling of task completion with incomplete subtasks
+
+#### SubtaskCompletionModal Component
+A smart modal that appears when completing tasks with incomplete subtasks:
+- **Completion Options** - Choose to complete all subtasks or just the parent task
+- **Subtask Preview** - View list of incomplete subtasks before deciding
+- **Visual Hierarchy** - Shows task depth with indentation
+
+### 📊 Task Progress System
+
+#### New Utility Functions in `taskHierarchy.ts`
+```typescript
+// Calculate task progress and completion statistics
+buildTaskHierarchy(tasks: Task[]): TaskHierarchy[]
+calculateProgressPercentage(taskId: string, allTasks: Task[]): number
+getTotalSubtaskCount(taskId: string, allTasks: Task[]): number
+getCompletedSubtaskCount(taskId: string, allTasks: Task[]): number
+
+// Task relationship utilities
+isAncestorOf(ancestorId: string, descendantId: string, allTasks: Task[]): boolean
+getAllDescendants(taskId: string, allTasks: Task[]): Task[]
+getRootTask(task: Task, allTasks: Task[]): Task
+getTaskDepth(task: Task, allTasks: Task[]): number
+```
+
+#### Enhanced Task Store Functions
+```typescript
+// New state management for task expansion
+expandedTasks: Set<string>
+toggleTaskExpansion(taskId: string): void
+
+// Advanced task completion with subtask handling
+toggleTaskCompletionWithSubtasks(taskId: string, markSubtasksDone?: boolean): Promise<Task>
+getIncompleteSubtasks(parentId: string): Promise<Task[]>
+calculateTaskProgress(id: string): Promise<TaskProgress>
+
+// Bulk operations
+bulkDeleteTasks(taskIds: string[]): Promise<void>
+bulkMarkTasksCompleted(taskIds: string[], completed: boolean): Promise<void>
+```
+
+### 🔄 Automatic Update System
+
+#### Update Checker Utilities in `updateChecker.ts`
+```typescript
+// Core update checking functions
+checkForUpdates(): Promise<UpdateInfo>
+checkForUpdatesWithCache(): Promise<UpdateInfo>
+compareVersions(currentVersion: string, newVersion: string): boolean
+
+// Caching system for efficient update checking
+getCachedUpdateInfo(): UpdateInfo | null
+cacheUpdateInfo(updateInfo: UpdateInfo): void
+```
+
+#### useUpdateChecker Hook
+```typescript
+// React hook for update management
+const { updateInfo, isChecking, error, checkForUpdates } = useUpdateChecker()
+```
+
+### 📋 Advanced Sorting System
+
+#### SortDropdown Component
+Enhanced sorting with multiple criteria:
+- **Sort Fields** - Name, Due Date, Created Date, Updated Date, Priority, Status
+- **Sort Orders** - Ascending/Descending with visual indicators
+- **Responsive Design** - Optimized labels for mobile and desktop
+- **Visual Feedback** - Icons showing current sort direction
+
+### 🔄 Bulk Operations System
+
+#### Bulk Action Features
+- **Multi-Selection** - Checkbox selection across all tasks and subtasks
+- **Floating Action Menu** - Desktop: Bottom-right floating menu, Mobile: Bottom sheet
+- **Bulk Actions Available**:
+  - Mark multiple tasks as done/undone
+  - Delete multiple tasks at once
+  - Clear all selections
+- **Confirmation Dialogs** - Smart confirmation with task counts
+- **Responsive UI** - Adaptive interface for different screen sizes
 
 ## 🔧 Development
 
@@ -348,6 +472,8 @@ For major changes, please open an issue first to discuss what you would like to 
 - **📋 Task Templates** - Reusable task templates for common workflows
 - **📈 Analytics Dashboard** - Productivity insights and completion statistics
 - **🎨 Theme Customization** - Custom color themes and layout options
+- **🔍 Advanced Search** - Filter by date ranges, tags, and task hierarchy
+- **⚡ Keyboard Navigation** - Full keyboard support for power users
 
 ### Future Enhancements (v1.2.0+)
 - **🔗 Integrations** - Calendar sync (Google Calendar, Outlook)
@@ -356,6 +482,7 @@ For major changes, please open an issue first to discuss what you would like to 
 - **🔔 Smart Notifications** - Context-aware reminders and alerts
 - **🌐 Web Version** - Browser-based access with PWA support
 - **📱 Mobile Apps** - Native iOS and Android applications
+- **🏷️ Advanced Tagging** - Tag hierarchies and smart tag suggestions
 
 ### Long-term Vision
 - **🤖 AI Integration** - Smart task suggestions and auto-categorization

@@ -1,5 +1,7 @@
 use thiserror::Error;
 
+pub mod window_state;
+
 #[derive(Error, Debug)]
 pub enum AppError {
     #[error("Database error: {0}")]

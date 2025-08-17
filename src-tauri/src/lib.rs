@@ -8,6 +8,7 @@ pub mod utils;
 
 use database::Database;
 use commands::*;
+use utils::window_state::setup_window_state_persistence;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -25,6 +26,11 @@ pub fn run() {
             // Store database in app state
             app.manage(Mutex::new(database));
             
+            // Setup window state persistence
+            if let Err(e) = setup_window_state_persistence(app) {
+                eprintln!("Failed to setup window state persistence: {}", e);
+            }
+            
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -37,6 +43,13 @@ pub fn run() {
             toggle_task_completion,
             search_tasks,
             get_tasks_by_category,
+            // New subtask commands
+            get_subtasks,
+            get_task_hierarchy,
+            get_task_with_subtasks,
+            calculate_task_progress,
+            get_incomplete_subtasks,
+            bulk_mark_subtasks_completed,
             // Category commands
             create_category,
             get_categories,

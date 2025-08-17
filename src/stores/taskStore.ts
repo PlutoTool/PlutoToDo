@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Task, TaskFilter, CreateTaskRequest, UpdateTaskRequest, SortConfig, SortField, SortOrder, Priority } from '../types';
+import { Task, TaskFilter, CreateTaskRequest, UpdateTaskRequest, SortConfig, SortField, SortOrder, Priority, TaskProgress, TaskHierarchy } from '../types';
 import { invoke } from '@tauri-apps/api/core';
 
 interface TaskStore {
@@ -8,6 +8,8 @@ interface TaskStore {
   error: string | null;
   filter: TaskFilter;
   sortConfig: SortConfig;
+  expandedTasks: Set<string>; // Track expanded tasks for hierarchical view
+  viewMode: 'flat' | 'hierarchical'; // New view mode
   
   // Actions
   setTasks: (tasks: Task[]) => void;
@@ -15,6 +17,8 @@ interface TaskStore {
   setError: (error: string | null) => void;
   setFilter: (filter: TaskFilter) => void;
   setSortConfig: (sortConfig: SortConfig) => void;
+  setViewMode: (mode: 'flat' | 'hierarchical') => void;
+  toggleTaskExpansion: (taskId: string) => void;
   sortTasks: (tasks: Task[]) => Task[];
   
   // Async actions
@@ -24,6 +28,17 @@ interface TaskStore {
   deleteTask: (id: string) => Promise<void>;
   toggleTaskCompletion: (id: string) => Promise<Task>;
   searchTasks: (query: string) => Promise<Task[]>;
+  
+  // New subtask methods
+  loadSubtasks: (parentId: string) => Promise<Task[]>;
+  loadTaskHierarchy: (rootId?: string) => Promise<Task[]>;
+  loadTaskWithSubtasks: (id: string) => Promise<Task[]>;
+  calculateTaskProgress: (id: string) => Promise<TaskProgress>;
+  buildTaskHierarchy: (tasks: Task[]) => TaskHierarchy[];
+  flattenHierarchy: (hierarchy: TaskHierarchy[]) => Task[];
+  getIncompleteSubtasks: (parentId: string) => Promise<Task[]>;
+  bulkMarkSubtasksCompleted: (parentId: string) => Promise<Task[]>;
+  toggleTaskCompletionWithSubtasks: (taskId: string, markSubtasksDone?: boolean) => Promise<Task>;
   
   // Bulk actions
   bulkDeleteTasks: (ids: string[]) => Promise<void>;
@@ -36,6 +51,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   error: null,
   filter: {},
   sortConfig: { field: SortField.CreatedAt, order: SortOrder.Desc },
+  expandedTasks: new Set<string>(),
+  viewMode: 'flat',
 
   setTasks: (tasks) => {
     const sortedTasks = get().sortTasks(tasks);
@@ -54,6 +71,18 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     const currentTasks = get().tasks;
     const sortedTasks = get().sortTasks(currentTasks);
     set({ tasks: sortedTasks });
+  },
+  setViewMode: (mode) => set({ viewMode: mode }),
+  toggleTaskExpansion: (taskId) => {
+    set(state => {
+      const newExpanded = new Set(state.expandedTasks);
+      if (newExpanded.has(taskId)) {
+        newExpanded.delete(taskId);
+      } else {
+        newExpanded.add(taskId);
+      }
+      return { expandedTasks: newExpanded };
+    });
   },
 
   sortTasks: (tasks) => {
@@ -283,5 +312,142 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       set({ error: error as string, loading: false });
       throw error;
     }
+  },
+
+  // New subtask methods
+  loadSubtasks: async (parentId) => {
+    try {
+      const subtasks = await invoke<Task[]>('get_subtasks', { parentId });
+      return subtasks;
+    } catch (error) {
+      set({ error: error as string });
+      throw error;
+    }
+  },
+
+  loadTaskHierarchy: async (rootId) => {
+    try {
+      const tasks = await invoke<Task[]>('get_task_hierarchy', { root_id: rootId });
+      return tasks;
+    } catch (error) {
+      set({ error: error as string });
+      throw error;
+    }
+  },
+
+  loadTaskWithSubtasks: async (id) => {
+    try {
+      const tasks = await invoke<Task[]>('get_task_with_subtasks', { id });
+      return tasks;
+    } catch (error) {
+      set({ error: error as string });
+      throw error;
+    }
+  },
+
+  calculateTaskProgress: async (id) => {
+    try {
+      const progress = await invoke<TaskProgress>('calculate_task_progress', { id });
+      return progress;
+    } catch (error) {
+      set({ error: error as string });
+      throw error;
+    }
+  },
+
+  getIncompleteSubtasks: async (parentId: string) => {
+    try {
+      const incompleteSubtasks = await invoke<Task[]>('get_incomplete_subtasks', { parentId });
+      return incompleteSubtasks;
+    } catch (error) {
+      set({ error: error as string });
+      throw error;
+    }
+  },
+
+  bulkMarkSubtasksCompleted: async (parentId: string) => {
+    try {
+      const updatedTasks = await invoke<Task[]>('bulk_mark_subtasks_completed', { parentId });
+      
+      // Update local state
+      set(state => ({
+        tasks: state.tasks.map(task => {
+          const updated = updatedTasks.find(ut => ut.id === task.id);
+          return updated || task;
+        })
+      }));
+      
+      return updatedTasks;
+    } catch (error) {
+      set({ error: error as string });
+      throw error;
+    }
+  },
+
+  toggleTaskCompletionWithSubtasks: async (taskId: string, markSubtasksDone = false) => {
+    try {
+      // If we need to mark subtasks done first, do that
+      if (markSubtasksDone) {
+        await invoke('bulk_mark_subtasks_completed', { parentId: taskId });
+      }
+      
+      // Then toggle the parent task
+      const updatedTask = await invoke<Task>('toggle_task_completion', { id: taskId });
+      
+      // Reload all tasks to get the updated state
+      const allTasks = await invoke<Task[]>('get_tasks', {});
+      set({ tasks: allTasks });
+      
+      return updatedTask;
+    } catch (error) {
+      set({ error: error as string });
+      throw error;
+    }
+  },
+
+  buildTaskHierarchy: (tasks) => {
+    const taskMap = new Map<string, Task>();
+    const rootTasks: TaskHierarchy[] = [];
+    
+    // Create task map
+    tasks.forEach(task => taskMap.set(task.id, task));
+    
+    // Build hierarchy
+    const buildNode = (task: Task, depth: number = 0): TaskHierarchy => {
+      const children = tasks
+        .filter(t => t.parent_id === task.id)
+        .map(child => buildNode(child, depth + 1));
+      
+      return {
+        task: { ...task, depth },
+        children,
+        depth
+      };
+    };
+    
+    // Find root tasks (no parent_id)
+    tasks
+      .filter(task => !task.parent_id)
+      .forEach(rootTask => {
+        rootTasks.push(buildNode(rootTask));
+      });
+    
+    return rootTasks;
+  },
+
+  flattenHierarchy: (hierarchy) => {
+    const flattened: Task[] = [];
+    
+    const flatten = (nodes: TaskHierarchy[]) => {
+      nodes.forEach(node => {
+        flattened.push(node.task);
+        if (node.children.length > 0) {
+          flatten(node.children);
+        }
+      });
+    };
+    
+    flatten(hierarchy);
+    return flattened;
   },
 }));

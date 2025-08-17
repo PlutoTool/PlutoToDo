@@ -197,6 +197,138 @@ impl<'a> TaskRepository<'a> {
         }
         Ok(tags)
     }
+
+    pub fn get_task_hierarchy(&self, root_id: Option<String>) -> Result<Vec<Task>> {
+        let mut tasks = Vec::new();
+        let mut ids_to_process = Vec::new();
+
+        // Start with direct children of root_id (or root tasks if None)
+        let filter = TaskFilter {
+            completed: None,
+            priority: None,
+            category_id: None,
+            parent_id: root_id.clone(),
+            search_query: None,
+            due_before: None,
+            due_after: None,
+            no_category: None,
+        };
+
+        let direct_children = self.get_all(Some(filter))?;
+        
+        for child in direct_children {
+            ids_to_process.push(child.id.clone());
+            tasks.push(child);
+        }
+
+        // Recursively get all descendants
+        while let Some(current_id) = ids_to_process.pop() {
+            let filter = TaskFilter {
+                completed: None,
+                priority: None,
+                category_id: None,
+                parent_id: Some(current_id),
+                search_query: None,
+                due_before: None,
+                due_after: None,
+                no_category: None,
+            };
+
+            let children = self.get_all(Some(filter))?;
+            for child in children {
+                ids_to_process.push(child.id.clone());
+                tasks.push(child);
+            }
+        }
+
+        Ok(tasks)
+    }
+
+    pub fn calculate_task_progress(&self, task_id: &str) -> Result<crate::commands::task_commands::TaskProgress> {
+        // Get all subtasks recursively
+        let subtasks = self.get_task_hierarchy(Some(task_id.to_string()))?;
+        
+        if subtasks.is_empty() {
+            return Ok(crate::commands::task_commands::TaskProgress {
+                total_subtasks: 0,
+                completed_subtasks: 0,
+                progress_percentage: 0.0,
+                has_subtasks: false,
+            });
+        }
+
+        let total_subtasks = subtasks.len() as i32;
+        let completed_subtasks = subtasks.iter().filter(|t| t.completed).count() as i32;
+        let progress_percentage = if total_subtasks > 0 {
+            (completed_subtasks as f32 / total_subtasks as f32) * 100.0
+        } else {
+            0.0
+        };
+
+        Ok(crate::commands::task_commands::TaskProgress {
+            total_subtasks,
+            completed_subtasks,
+            progress_percentage,
+            has_subtasks: true,
+        })
+    }
+
+    pub fn delete_task_and_subtasks(&self, task_id: &str) -> Result<()> {
+        // Get all subtasks recursively
+        let subtasks = self.get_task_hierarchy(Some(task_id.to_string()))?;
+        
+        // Delete all subtasks first
+        for subtask in subtasks {
+            self.delete(&subtask.id)?;
+        }
+        
+        // Delete the main task
+        self.delete(task_id)?;
+        
+        Ok(())
+    }
+
+    pub fn get_root_tasks(&self) -> Result<Vec<Task>> {
+        let _filter = TaskFilter {
+            completed: None,
+            priority: None,
+            category_id: None,
+            parent_id: Some("NULL".to_string()), // Special case for root tasks
+            search_query: None,
+            due_before: None,
+            due_after: None,
+            no_category: None,
+        };
+
+        // Override the filter to get tasks with NULL parent_id
+        let query = "SELECT id, title, description, completed, priority, due_date, category_id, parent_id, created_at, updated_at FROM tasks WHERE parent_id IS NULL ORDER BY created_at DESC".to_string();
+        
+        let mut stmt = self.conn.prepare(&query)?;
+        let task_iter = stmt.query_map([], |row| {
+            Ok(Task {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                description: row.get(2)?,
+                completed: row.get(3)?,
+                priority: Priority::from_string(&row.get::<_, String>(4)?),
+                due_date: row.get(5)?,
+                category_id: row.get(6)?,
+                parent_id: row.get(7)?,
+                created_at: row.get(8)?,
+                updated_at: row.get(9)?,
+                tags: vec![], // Will be populated below
+            })
+        })?;
+
+        let mut tasks = Vec::new();
+        for task_result in task_iter {
+            let mut task = task_result?;
+            task.tags = self.get_task_tags(&task.id)?;
+            tasks.push(task);
+        }
+
+        Ok(tasks)
+    }
 }
 
 pub struct CategoryRepository<'a> {
