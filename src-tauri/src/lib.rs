@@ -8,6 +8,7 @@ pub mod utils;
 
 use database::Database;
 use commands::*;
+use utils::window_state::setup_window_state_persistence;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -24,6 +25,11 @@ pub fn run() {
             
             // Store database in app state
             app.manage(Mutex::new(database));
+            
+            // Setup window state persistence
+            if let Err(e) = setup_window_state_persistence(app) {
+                eprintln!("Failed to setup window state persistence: {}", e);
+            }
             
             Ok(())
         })
