@@ -4,6 +4,8 @@ A modern, elegant, and### 🎯 Core Task Management
 - **Create, Edit, Delete Tasks** - Full CRUD operations with intuitive interface
 - **Task Detail Modal** - Comprehensive task detail view with inline editing and metadata display
 - **Task Completion** - Toggle completion status with visual feedback and one-click actions
+- **Smart Task Deletion** - Intelligent deletion options for tasks with subtasks (delete all or promote subtasks)
+- **Bulk Delete Management** - Advanced bulk deletion with smart handling of parent-child relationships
 - **Subtasks Support** - Organize complex tasks with nested subtasks (2 levels deep)
 - **Hierarchical Task Management** - Expandable/collapsible tree view for task organization
 - **Task Progress Tracking** - Visual progress indicators showing subtask completion percentages
@@ -32,6 +34,8 @@ You can access information about PlutoTool directly from the application by clic
 
 ### Latest Features (v1.1.0)
 - **� Task Detail Modal** - Comprehensive task detail view with inline editing, subtask management, and metadata display
+- **🗑️ Smart Delete Options** - Intelligent deletion modals for tasks with subtasks, offering promote or delete options
+- **📋 Bulk Delete Management** - Advanced bulk deletion with smart handling of tasks containing subtasks
 - **🌙 Dark Mode Improvements** - Enhanced dark mode support with proper styling for all UI components
 - **�🔄 Automatic Update Checker** - Check for new releases directly from the sidebar
 - **ℹ️ About Section** - New About modal with PlutoTool information and website link
@@ -204,6 +208,8 @@ pluto-todo/
 │   │   ├── TaskList.tsx    # Task list container with bulk operations
 │   │   ├── TaskForm.tsx    # Task creation/editing form
 │   │   ├── TaskDetailModal.tsx # Comprehensive task detail modal with editing
+│   │   ├── DeleteTaskOptionsModal.tsx # Smart deletion options for tasks with subtasks
+│   │   ├── BulkDeleteOptionsModal.tsx # Bulk deletion management modal
 │   │   ├── SortDropdown.tsx # Advanced sorting controls
 │   │   ├── SubtaskCompletionModal.tsx # Smart completion dialog
 │   │   ├── AboutModal.tsx  # Application information modal
@@ -276,7 +282,8 @@ pluto-todo/
 ### Task Management
 - `Space` - Toggle task completion (when task selected)
 - `Cmd/Ctrl + E` - Edit selected task
-- `Cmd/Ctrl + D` - Delete selected task
+- `Cmd/Ctrl + D` - Delete selected task (shows smart deletion options for tasks with subtasks)
+- `Cmd/Ctrl + Shift + D` - Bulk delete selected tasks (shows bulk deletion options modal)
 - `Cmd/Ctrl + I` - Open task detail modal (when task selected)
 - `Cmd/Ctrl + A` - Select all tasks
 - `Cmd/Ctrl + Shift + A` - Deselect all tasks
@@ -423,6 +430,49 @@ A comprehensive modal for viewing and managing task details with advanced featur
 - Cancel/save functionality with state preservation
 ```
 
+### 🗑️ Smart Task Deletion System
+
+#### DeleteTaskOptionsModal Component
+An intelligent modal that appears when deleting tasks with subtasks, providing smart deletion options:
+- **Subtask Detection** - Automatically detects when a task has subtasks and shows appropriate options
+- **Delete All Option** - Permanently delete the parent task and all its subtasks with clear warning
+- **Promote Subtasks Option** - Delete only the parent task while promoting subtasks up one hierarchy level
+- **Visual Warning System** - Clear visual indicators with task counts and impact descriptions
+- **User-Friendly Interface** - Easy-to-understand options with descriptive text and icons
+
+#### BulkDeleteOptionsModal Component
+Advanced bulk deletion management for multiple selected tasks:
+- **Smart Analysis** - Analyzes selected tasks to identify which ones have subtasks
+- **Detailed Statistics** - Shows breakdown of tasks with and without subtasks
+- **Bulk Delete Options** - Choose to delete all tasks and subtasks or promote subtasks
+- **Impact Preview** - Clear visualization of what will be deleted vs. promoted
+- **Confirmation Safety** - Multiple confirmation steps to prevent accidental data loss
+
+#### Key Features
+```typescript
+// Smart deletion logic for individual tasks
+interface DeleteTaskOptionsModalProps {
+  taskTitle: string;           // Display task name for confirmation
+  subtaskCount: number;        // Show number of affected subtasks
+  onDeleteWithSubtasks: () => void;      // Delete parent and all children
+  onDeleteAndPromoteSubtasks: () => void; // Delete parent, promote children
+}
+
+// Bulk deletion with hierarchy awareness
+interface BulkDeleteOptionsModalProps {
+  totalTasks: number;          // Total number of selected tasks
+  tasksWithSubtasks: number;   // Count of parent tasks with children
+  onDeleteAll: () => void;     // Delete all selected tasks and their subtasks
+  onPromoteSubtasks: () => void; // Delete selected tasks but promote their subtasks
+}
+
+// Enhanced deletion workflow
+- Visual warnings with task impact analysis
+- Clear descriptions of each deletion option
+- Hierarchical promotion logic for maintaining task organization
+- Undo-safe operations with clear confirmation dialogs
+```
+
 ### �🔄 Automatic Update System
 
 #### Update Checker Utilities in `updateChecker.ts`
@@ -459,10 +509,17 @@ Enhanced sorting with multiple criteria:
 - **Floating Action Menu** - Desktop: Bottom-right floating menu, Mobile: Bottom sheet
 - **Bulk Actions Available**:
   - Mark multiple tasks as done/undone
-  - Delete multiple tasks at once
+  - Delete multiple tasks at once with smart hierarchy handling
   - Clear all selections
-- **Confirmation Dialogs** - Smart confirmation with task counts
+- **Smart Deletion Modals** - Intelligent deletion options for tasks with subtasks
+- **Confirmation Dialogs** - Smart confirmation with task counts and hierarchy impact analysis
 - **Responsive UI** - Adaptive interface for different screen sizes
+
+#### Enhanced Deletion Features
+- **Individual Task Deletion** - Smart options when deleting tasks with subtasks (delete all vs. promote)
+- **Bulk Deletion Management** - Advanced handling of multiple tasks with different hierarchy structures
+- **Subtask Promotion** - Option to promote subtasks when deleting parent tasks
+- **Visual Impact Analysis** - Clear preview of what will be deleted vs. promoted before confirmation
 
 ## 🔧 Development
 
