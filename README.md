@@ -1,10 +1,21 @@
 # Pluto: To-do
 
-A modern, elegant, and feature-rich cross-platform todo application built with Rust Tauri 2 and TypeScript React. Part of the PlutoTool suite of productivity applications.
+A modern, elegant, and### 🎯 Core Task Management
+- **Create, Edit, Delete Tasks** - Full CRUD operations with intuitive interface
+- **Task Detail Modal** - Comprehensive task detail view with inline editing and metadata display
+- **Task Completion** - Toggle completion status with visual feedback and one-click actions
+- **Subtasks Support** - Organize complex tasks with nested subtasks (2 levels deep)
+- **Hierarchical Task Management** - Expandable/collapsible tree view for task organization
+- **Task Progress Tracking** - Visual progress indicators showing subtask completion percentages
+- **Smart Task Completion** - Intelligent completion handling for tasks with incomplete subtasks
+- **Priority Levels** - High, Medium, Low priority with color coding and visual indicators
+- **Due Dates** - Calendar picker with overdue indicators and smart reminders
+- **Rich Descriptions** - Detailed task descriptions with markdown support
+- **Bulk Operations** - Select multiple tasks for bulk delete, completion, or updatesch cross-platform todo application built with Rust Tauri 2 and TypeScript React. Part of the PlutoTool suite of productivity applications.
 
 ![Pluto: To-do](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)
 ![Tech Stack](https://img.shields.io/badge/Tech-Tauri%202%20%7C%20React%20%7C%20TypeScript-green)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+![License](https://img.shields.io/badge/License-LGPL--3.0-yellow)
 ![Version](https://img.shields.io/badge/Version-1.1.0-orange)
 
 ## 🌟 About PlutoTool
@@ -20,7 +31,9 @@ You can access information about PlutoTool directly from the application by clic
 ## 🆕 Recent Updates
 
 ### Latest Features (v1.1.0)
-- **🔄 Automatic Update Checker** - Check for new releases directly from the sidebar
+- **� Task Detail Modal** - Comprehensive task detail view with inline editing, subtask management, and metadata display
+- **🌙 Dark Mode Improvements** - Enhanced dark mode support with proper styling for all UI components
+- **�🔄 Automatic Update Checker** - Check for new releases directly from the sidebar
 - **ℹ️ About Section** - New About modal with PlutoTool information and website link
 - **✨ Advanced Sorting System** - Sort tasks by multiple fields with ascending/descending options
 - **🔄 Bulk Operations** - Select and manage multiple tasks simultaneously
@@ -56,7 +69,8 @@ You can access information about PlutoTool directly from the application by clic
 
 ### 🎨 User Experience
 - **Space-themed Design** - Cosmic color palette with deep blues and purples
-- **Dark Mode Support** - Automatic system preference detection with manual toggle
+- **Enhanced Dark Mode** - Comprehensive dark mode support with proper styling for all components
+- **Task Detail Modal** - Rich task detail view with inline editing, subtask navigation, and progress tracking
 - **Update Notifications** - Automatic update checking with detailed release notes and one-click downloads
 - **About Modal** - Accessible information about the app and PlutoTool with direct website link
 - **Responsive Design** - Optimized for desktop, tablet, and mobile
@@ -189,6 +203,7 @@ pluto-todo/
 │   │   ├── SubtaskItem.tsx # Enhanced hierarchical task display
 │   │   ├── TaskList.tsx    # Task list container with bulk operations
 │   │   ├── TaskForm.tsx    # Task creation/editing form
+│   │   ├── TaskDetailModal.tsx # Comprehensive task detail modal with editing
 │   │   ├── SortDropdown.tsx # Advanced sorting controls
 │   │   ├── SubtaskCompletionModal.tsx # Smart completion dialog
 │   │   ├── AboutModal.tsx  # Application information modal
@@ -262,11 +277,21 @@ pluto-todo/
 - `Space` - Toggle task completion (when task selected)
 - `Cmd/Ctrl + E` - Edit selected task
 - `Cmd/Ctrl + D` - Delete selected task
+- `Cmd/Ctrl + I` - Open task detail modal (when task selected)
 - `Cmd/Ctrl + A` - Select all tasks
 - `Cmd/Ctrl + Shift + A` - Deselect all tasks
 - `Enter` - Confirm/submit forms
 - `Click Chevron` - Expand/collapse subtasks
 - `Shift + Click` - Bulk select range of tasks
+
+### Task Detail Modal
+- `Escape` - Close modal/cancel editing
+- `Cmd/Ctrl + E` - Edit current task
+- `Cmd/Ctrl + S` - Save changes (when editing)
+- `Cmd/Ctrl + Delete` - Delete current task
+- `Cmd/Ctrl + N` - Add new subtask
+- `Tab` - Navigate between subtasks
+- `Enter` - Navigate to selected subtask
 
 ### Sorting & Filtering
 - `Cmd/Ctrl + 1-6` - Quick sort by field (Name, Due Date, Created, Updated, Priority, Status)
@@ -287,6 +312,33 @@ pluto-todo/
 - **Font Weights**: 300 (Light), 400 (Regular), 500 (Medium), 600 (Semibold), 700 (Bold)
 
 ## 🆕 New Features & Functions
+
+### 📋 Task Detail Modal System
+
+#### TaskDetailModal Component
+The new `TaskDetailModal` provides a comprehensive task management interface:
+- **Complete Task Overview** - View all task metadata in a single, organized interface
+- **Inline Editing** - Edit tasks without leaving the detail view
+- **Subtask Management** - Add, view, and navigate subtasks with progress tracking
+- **Status Controls** - Quick completion toggle with visual feedback
+- **Navigation System** - Breadcrumb-style navigation between parent and child tasks
+- **Dark Mode Optimized** - Fully styled for both light and dark themes
+
+#### Enhanced Task Interaction
+```typescript
+// New task detail functionality
+openTaskDetail(taskId: string): void
+navigateToSubtask(subtaskId: string): void
+navigateToParent(parentId: string): void
+toggleTaskFromDetail(taskId: string): Promise<void>
+editTaskInline(task: Task): void
+deleteTaskFromDetail(taskId: string): Promise<void>
+
+// Modal state management
+showTaskDetail: boolean
+currentDetailTask: Task | null
+taskDetailHistory: string[]  // For navigation breadcrumbs
+```
 
 ### 🌳 Enhanced Subtask System
 
@@ -336,7 +388,42 @@ bulkDeleteTasks(taskIds: string[]): Promise<void>
 bulkMarkTasksCompleted(taskIds: string[], completed: boolean): Promise<void>
 ```
 
-### 🔄 Automatic Update System
+### � Task Detail Modal
+
+#### TaskDetailModal Component
+A comprehensive modal for viewing and managing task details with advanced features:
+- **Rich Task Information** - Complete task metadata including creation/update timestamps, category, priority, and tags
+- **Inline Editing** - Edit task details directly within the modal without losing context
+- **Status Management** - Toggle task completion with visual feedback and confirmation
+- **Subtask Navigation** - Navigate between parent tasks and subtasks with breadcrumb-style navigation
+- **Progress Visualization** - Real-time progress bars and completion statistics for subtasks
+- **Quick Actions** - Edit, delete, and add subtasks with convenient action buttons
+- **Dark Mode Support** - Fully optimized for both light and dark themes
+- **Responsive Layout** - Adaptive design for desktop, tablet, and mobile viewports
+
+#### Key Features
+```typescript
+// Enhanced task detail viewing with metadata
+- Task title with completion status and priority indicators
+- Rich description display with formatted text
+- Due date with overdue warnings and calendar integration
+- Category assignment with color-coded visual indicators
+- Tag system with searchable and filterable tags
+- Creation and modification timestamps
+
+// Advanced subtask management
+- Hierarchical navigation between parent and child tasks
+- Progress tracking with visual completion percentages
+- Quick subtask creation directly from the detail view
+- Clickable subtask navigation for deep task exploration
+
+// Seamless editing workflow
+- In-place editing without losing modal context
+- Form validation with real-time feedback
+- Cancel/save functionality with state preservation
+```
+
+### �🔄 Automatic Update System
 
 #### Update Checker Utilities in `updateChecker.ts`
 ```typescript
@@ -492,7 +579,7 @@ For major changes, please open an issue first to discuss what you would like to 
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU Lesser General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
