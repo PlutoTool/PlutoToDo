@@ -332,11 +332,29 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       console.log('Bulk deleting tasks with subtasks:', ids);
       set({ loading: true, error: null });
       
+      // Get all tasks that will be deleted (parents + their subtasks) before deletion
+      const state = get();
+      const tasksToDelete = new Set<string>();
+      
+      // Add the selected task IDs
+      ids.forEach(id => tasksToDelete.add(id));
+      
+      // For each selected task, recursively find all subtasks that will be deleted
+      const findAllSubtasks = (parentId: string) => {
+        const subtasks = state.tasks.filter(task => task.parent_id === parentId);
+        subtasks.forEach(subtask => {
+          tasksToDelete.add(subtask.id);
+          findAllSubtasks(subtask.id); // Recursively find nested subtasks
+        });
+      };
+      
+      ids.forEach(id => findAllSubtasks(id));
+      
       await invoke('bulk_delete_tasks_with_subtasks', { ids });
       
-      // Update local state
+      // Update local state - remove all tasks that were deleted (parents + subtasks)
       set(state => ({
-        tasks: state.tasks.filter(task => !ids.includes(task.id)),
+        tasks: state.tasks.filter(task => !tasksToDelete.has(task.id)),
         loading: false
       }));
       
