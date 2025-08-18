@@ -4,6 +4,7 @@ import { invoke } from '@tauri-apps/api/core';
 
 interface TaskStore {
   tasks: Task[];
+  allTasks: Task[]; // Unfiltered tasks for count calculations
   loading: boolean;
   error: string | null;
   filter: TaskFilter;
@@ -13,6 +14,7 @@ interface TaskStore {
   
   // Actions
   setTasks: (tasks: Task[]) => void;
+  setAllTasks: (tasks: Task[]) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setFilter: (filter: TaskFilter) => void;
@@ -53,6 +55,7 @@ interface TaskStore {
 
 export const useTaskStore = create<TaskStore>((set, get) => ({
   tasks: [],
+  allTasks: [],
   loading: false,
   error: null,
   filter: {},
@@ -64,6 +67,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     const sortedTasks = get().sortTasks(tasks);
     set({ tasks: sortedTasks });
   },
+  setAllTasks: (allTasks) => set({ allTasks }),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
   setFilter: (filter) => {
@@ -134,6 +138,10 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       set({ loading: true, error: null });
       const currentFilter = get().filter;
       
+      // Always load all tasks for count calculations
+      const allTasks = await invoke<Task[]>('get_tasks', { filter: null });
+      get().setAllTasks(allTasks);
+      
       // Only pass filter if it has meaningful values
       const hasFilter = currentFilter && (
         currentFilter.completed !== undefined ||
@@ -148,7 +156,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       
       const tasks = hasFilter 
         ? await invoke<Task[]>('get_tasks', { filter: currentFilter })
-        : await invoke<Task[]>('get_tasks', { filter: null });
+        : allTasks; // Use already loaded allTasks if no filter
         
       get().setTasks(tasks); // Use setTasks to apply sorting
       set({ loading: false });
@@ -185,7 +193,9 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       
       // Add new task and re-sort
       const currentTasks = get().tasks;
+      const currentAllTasks = get().allTasks;
       get().setTasks([newTask, ...currentTasks]);
+      get().setAllTasks([newTask, ...currentAllTasks]);
       set({ loading: false });
       return newTask;
     } catch (error) {
@@ -211,8 +221,11 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       
       // Update task and re-sort
       const currentTasks = get().tasks;
+      const currentAllTasks = get().allTasks;
       const updatedTasks = currentTasks.map(task => task.id === id ? updatedTask : task);
+      const updatedAllTasks = currentAllTasks.map(task => task.id === id ? updatedTask : task);
       get().setTasks(updatedTasks);
+      get().setAllTasks(updatedAllTasks);
       set({ loading: false });
       return updatedTask;
     } catch (error) {
@@ -230,6 +243,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       console.log('Tauri command completed, updating local state...');
       set(state => ({
         tasks: state.tasks.filter(task => task.id !== id),
+        allTasks: state.allTasks.filter(task => task.id !== id),
         loading: false
       }));
       console.log('Local state updated');
@@ -247,7 +261,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       
       // Reload all tasks to get the updated state
       const allTasks = await invoke<Task[]>('get_tasks', {});
-      set({ tasks: allTasks, loading: false });
+      set({ tasks: allTasks, allTasks: allTasks, loading: false });
     } catch (error) {
       set({ error: error as string, loading: false });
       throw error;
@@ -261,7 +275,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       
       // Reload all tasks to get the updated state
       const allTasks = await invoke<Task[]>('get_tasks', {});
-      set({ tasks: allTasks, loading: false });
+      set({ tasks: allTasks, allTasks: allTasks, loading: false });
     } catch (error) {
       set({ error: error as string, loading: false });
       throw error;
@@ -281,7 +295,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     try {
       const updatedTask = await invoke<Task>('toggle_task_completion', { id });
       set(state => ({
-        tasks: state.tasks.map(task => task.id === id ? updatedTask : task)
+        tasks: state.tasks.map(task => task.id === id ? updatedTask : task),
+        allTasks: state.allTasks.map(task => task.id === id ? updatedTask : task)
       }));
       return updatedTask;
     } catch (error) {
@@ -313,6 +328,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       // Update local state
       set(state => ({
         tasks: state.tasks.filter(task => !ids.includes(task.id)),
+        allTasks: state.allTasks.filter(task => !ids.includes(task.id)),
         loading: false
       }));
       
@@ -364,6 +380,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       // Update local state - remove all tasks that were deleted (parents + subtasks)
       set(state => ({
         tasks: state.tasks.filter(task => !tasksToDelete.has(task.id)),
+        allTasks: state.allTasks.filter(task => !tasksToDelete.has(task.id)),
         loading: false
       }));
       
@@ -384,9 +401,11 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       
       // Reload tasks to get the updated state with promoted subtasks
       const updatedTasks = await invoke<Task[]>('get_tasks', { filter: get().filter });
+      const allTasks = await invoke<Task[]>('get_tasks', { filter: null });
       
       set({
         tasks: updatedTasks,
+        allTasks: allTasks,
         loading: false
       });
       
@@ -426,6 +445,10 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       // Update local state
       set(state => ({
         tasks: state.tasks.map(task => {
+          const updated = updatedTasks.find(ut => ut.id === task.id);
+          return updated || task;
+        }),
+        allTasks: state.allTasks.map(task => {
           const updated = updatedTasks.find(ut => ut.id === task.id);
           return updated || task;
         }),
@@ -500,6 +523,10 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         tasks: state.tasks.map(task => {
           const updated = updatedTasks.find(ut => ut.id === task.id);
           return updated || task;
+        }),
+        allTasks: state.allTasks.map(task => {
+          const updated = updatedTasks.find(ut => ut.id === task.id);
+          return updated || task;
         })
       }));
       
@@ -522,7 +549,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       
       // Reload all tasks to get the updated state
       const allTasks = await invoke<Task[]>('get_tasks', {});
-      set({ tasks: allTasks });
+      set({ tasks: allTasks, allTasks: allTasks });
       
       return updatedTask;
     } catch (error) {
