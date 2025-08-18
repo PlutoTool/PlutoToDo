@@ -4,6 +4,7 @@ import { Button } from './ui/Button';
 import { Card, CardContent } from './ui/Card';
 import { TaskForm } from './TaskForm';
 import { ConfirmDialog } from './ConfirmDialog';
+import { DeleteTaskOptionsModal } from './DeleteTaskOptionsModal';
 import { Task } from '../types';
 import { useTaskStore } from '../stores/taskStore';
 import { useCategoryStore } from '../stores/categoryStore';
@@ -43,9 +44,13 @@ export default function TaskDetailModal({
   const [isEditing, setIsEditing] = useState(false);
   const [showSubtaskForm, setShowSubtaskForm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteOptionsModal, setShowDeleteOptionsModal] = useState(false);
   const { 
     toggleTaskCompletion, 
     deleteTask,
+    deleteTaskWithSubtasks,
+    deleteTaskAndPromoteSubtasks,
+    checkTaskHasSubtasks,
     tasks: allTasks 
   } = useTaskStore();
   const { categories } = useCategoryStore();
@@ -59,6 +64,7 @@ export default function TaskDetailModal({
       setIsEditing(false);
       setShowSubtaskForm(false);
       setShowDeleteConfirm(false);
+      setShowDeleteOptionsModal(false);
     }
   }, [isOpen]);
 
@@ -67,6 +73,7 @@ export default function TaskDetailModal({
     setIsEditing(false);
     setShowSubtaskForm(false);
     setShowDeleteConfirm(false);
+    setShowDeleteOptionsModal(false);
   }, [task?.id]);
 
   // Debug effect to track showDeleteConfirm changes
@@ -104,11 +111,25 @@ export default function TaskDetailModal({
     setIsEditing(false);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     console.log('Delete button clicked for task:', currentTask.id);
-    console.log('Setting showDeleteConfirm to true');
-    setShowDeleteConfirm(true);
-    console.log('showDeleteConfirm state should now be true');
+    
+    try {
+      // Check if task has subtasks
+      const hasSubtasks = await checkTaskHasSubtasks(currentTask.id);
+      
+      if (hasSubtasks) {
+        // Show options modal if task has subtasks
+        setShowDeleteOptionsModal(true);
+      } else {
+        // Show simple confirmation if no subtasks
+        setShowDeleteConfirm(true);
+      }
+    } catch (error) {
+      console.error('Failed to check subtasks:', error);
+      // Fallback to simple confirmation
+      setShowDeleteConfirm(true);
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -125,6 +146,38 @@ export default function TaskDetailModal({
       console.error('Failed to delete task:', error);
     } finally {
       setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleDeleteWithSubtasks = async () => {
+    if (!task) return;
+    
+    try {
+      console.log('Deleting task with subtasks:', task.id);
+      await deleteTaskWithSubtasks(task.id);
+      console.log('Task and subtasks deleted successfully, closing modal...');
+      
+      onClose();
+    } catch (error) {
+      console.error('Failed to delete task with subtasks:', error);
+    } finally {
+      setShowDeleteOptionsModal(false);
+    }
+  };
+
+  const handleDeleteAndPromoteSubtasks = async () => {
+    if (!task) return;
+    
+    try {
+      console.log('Deleting task and promoting subtasks:', task.id);
+      await deleteTaskAndPromoteSubtasks(task.id);
+      console.log('Task deleted and subtasks promoted successfully, closing modal...');
+      
+      onClose();
+    } catch (error) {
+      console.error('Failed to delete task and promote subtasks:', error);
+    } finally {
+      setShowDeleteOptionsModal(false);
     }
   };  const handleDeleteCancel = () => {
     setShowDeleteConfirm(false);
@@ -511,6 +564,16 @@ export default function TaskDetailModal({
         onCancel={handleDeleteCancel}
         confirmText="Delete"
         cancelText="Cancel"
+      />
+
+      {/* Delete Options Modal for tasks with subtasks */}
+      <DeleteTaskOptionsModal
+        isOpen={showDeleteOptionsModal}
+        onClose={() => setShowDeleteOptionsModal(false)}
+        onDeleteWithSubtasks={handleDeleteWithSubtasks}
+        onDeleteAndPromoteSubtasks={handleDeleteAndPromoteSubtasks}
+        taskTitle={currentTask.title}
+        subtaskCount={subtasks.length}
       />
     </>
   );

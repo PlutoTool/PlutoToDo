@@ -26,6 +26,9 @@ interface TaskStore {
   createTask: (task: CreateTaskRequest) => Promise<Task>;
   updateTask: (id: string, updates: UpdateTaskRequest) => Promise<Task>;
   deleteTask: (id: string) => Promise<void>;
+  deleteTaskWithSubtasks: (id: string) => Promise<void>;
+  deleteTaskAndPromoteSubtasks: (id: string) => Promise<void>;
+  checkTaskHasSubtasks: (id: string) => Promise<boolean>;
   toggleTaskCompletion: (id: string) => Promise<Task>;
   searchTasks: (query: string) => Promise<Task[]>;
   
@@ -42,6 +45,9 @@ interface TaskStore {
   
   // Bulk actions
   bulkDeleteTasks: (ids: string[]) => Promise<void>;
+  bulkCheckTasksHaveSubtasks: (ids: string[]) => Promise<string[]>;
+  bulkDeleteTasksWithSubtasks: (ids: string[]) => Promise<void>;
+  bulkDeleteTasksAndPromoteSubtasks: (ids: string[]) => Promise<void>;
   bulkMarkTasksCompleted: (ids: string[], completed: boolean) => Promise<void>;
 }
 
@@ -225,6 +231,43 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
+  deleteTaskWithSubtasks: async (id) => {
+    try {
+      set({ loading: true, error: null });
+      await invoke('delete_task_with_subtasks', { id });
+      
+      // Reload all tasks to get the updated state
+      const allTasks = await invoke<Task[]>('get_tasks', {});
+      set({ tasks: allTasks, loading: false });
+    } catch (error) {
+      set({ error: error as string, loading: false });
+      throw error;
+    }
+  },
+
+  deleteTaskAndPromoteSubtasks: async (id) => {
+    try {
+      set({ loading: true, error: null });
+      await invoke('delete_task_and_promote_subtasks', { id });
+      
+      // Reload all tasks to get the updated state
+      const allTasks = await invoke<Task[]>('get_tasks', {});
+      set({ tasks: allTasks, loading: false });
+    } catch (error) {
+      set({ error: error as string, loading: false });
+      throw error;
+    }
+  },
+
+  checkTaskHasSubtasks: async (id) => {
+    try {
+      return await invoke<boolean>('check_task_has_subtasks', { id });
+    } catch (error) {
+      set({ error: error as string });
+      throw error;
+    }
+  },
+
   toggleTaskCompletion: async (id) => {
     try {
       const updatedTask = await invoke<Task>('toggle_task_completion', { id });
@@ -267,6 +310,62 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       console.log('Bulk delete completed');
     } catch (error) {
       console.error('Bulk delete failed:', error);
+      set({ error: error as string, loading: false });
+      throw error;
+    }
+  },
+
+  bulkCheckTasksHaveSubtasks: async (ids) => {
+    try {
+      console.log('Checking which tasks have subtasks:', ids);
+      const tasksWithSubtasks = await invoke<string[]>('bulk_check_tasks_have_subtasks', { ids });
+      console.log('Tasks with subtasks:', tasksWithSubtasks);
+      return tasksWithSubtasks;
+    } catch (error) {
+      console.error('Failed to check tasks for subtasks:', error);
+      throw error;
+    }
+  },
+
+  bulkDeleteTasksWithSubtasks: async (ids) => {
+    try {
+      console.log('Bulk deleting tasks with subtasks:', ids);
+      set({ loading: true, error: null });
+      
+      await invoke('bulk_delete_tasks_with_subtasks', { ids });
+      
+      // Update local state
+      set(state => ({
+        tasks: state.tasks.filter(task => !ids.includes(task.id)),
+        loading: false
+      }));
+      
+      console.log('Bulk delete with subtasks completed');
+    } catch (error) {
+      console.error('Bulk delete with subtasks failed:', error);
+      set({ error: error as string, loading: false });
+      throw error;
+    }
+  },
+
+  bulkDeleteTasksAndPromoteSubtasks: async (ids) => {
+    try {
+      console.log('Bulk deleting tasks and promoting subtasks:', ids);
+      set({ loading: true, error: null });
+      
+      await invoke('bulk_delete_tasks_and_promote_subtasks', { ids });
+      
+      // Reload tasks to get the updated state with promoted subtasks
+      const updatedTasks = await invoke<Task[]>('get_tasks', { filter: get().filter });
+      
+      set({
+        tasks: updatedTasks,
+        loading: false
+      });
+      
+      console.log('Bulk delete and promote subtasks completed');
+    } catch (error) {
+      console.error('Bulk delete and promote subtasks failed:', error);
       set({ error: error as string, loading: false });
       throw error;
     }

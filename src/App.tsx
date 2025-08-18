@@ -4,6 +4,8 @@ import { TaskList } from './components/TaskList';
 import { TaskForm } from './components/TaskForm';
 import { CategoryForm } from './components/CategoryForm';
 import { ConfirmDialog } from './components/ConfirmDialog';
+import { DeleteTaskOptionsModal } from './components/DeleteTaskOptionsModal';
+import { BulkDeleteOptionsModal } from './components/BulkDeleteOptionsModal';
 import { SortDropdown } from './components/SortDropdown';
 import { AboutModal } from './components/AboutModal';
 import { Modal } from './components/ui/Modal';
@@ -31,6 +33,17 @@ function App() {
     isOpen: false,
     taskId: null
   });
+  const [deleteTaskOptions, setDeleteTaskOptions] = useState<{ 
+    isOpen: boolean; 
+    taskId: string | null;
+    taskTitle: string;
+    subtaskCount: number;
+  }>({
+    isOpen: false,
+    taskId: null,
+    taskTitle: '',
+    subtaskCount: 0
+  });
   const [confirmBulkAction, setConfirmBulkAction] = useState<{ 
     isOpen: boolean; 
     action: 'delete' | 'markDone' | 'markUndone' | null;
@@ -53,7 +66,29 @@ function App() {
   });
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
-  const { setFilter, deleteTask, bulkDeleteTasks, bulkMarkTasksCompleted, updateTask, tasks } = useTaskStore();
+  const [bulkDeleteOptions, setBulkDeleteOptions] = useState<{
+    isOpen: boolean;
+    tasksWithSubtasks: number;
+    totalTasks: number;
+  }>({
+    isOpen: false,
+    tasksWithSubtasks: 0,
+    totalTasks: 0
+  });
+  const { 
+    setFilter, 
+    deleteTask, 
+    deleteTaskWithSubtasks, 
+    deleteTaskAndPromoteSubtasks, 
+    checkTaskHasSubtasks, 
+    bulkDeleteTasks, 
+    bulkCheckTasksHaveSubtasks,
+    bulkDeleteTasksWithSubtasks,
+    bulkDeleteTasksAndPromoteSubtasks,
+    bulkMarkTasksCompleted, 
+    updateTask, 
+    tasks 
+  } = useTaskStore();
   const { deleteCategory } = useCategoryStore();
 
   useEffect(() => {
@@ -114,9 +149,32 @@ function App() {
     setParentTaskId(undefined);
   };
 
-  const handleDeleteTask = (id: string) => {
+  const handleDeleteTask = async (id: string) => {
     console.log('Delete task called with id:', id);
-    setConfirmDelete({ isOpen: true, taskId: id });
+    
+    try {
+      // Check if task has subtasks
+      const hasSubtasks = await checkTaskHasSubtasks(id);
+      const task = tasks.find(t => t.id === id);
+      
+      if (hasSubtasks && task) {
+        // Count direct subtasks for display
+        const directSubtasks = tasks.filter(t => t.parent_id === id);
+        setDeleteTaskOptions({ 
+          isOpen: true, 
+          taskId: id,
+          taskTitle: task.title,
+          subtaskCount: directSubtasks.length
+        });
+      } else {
+        // Show simple confirmation if no subtasks
+        setConfirmDelete({ isOpen: true, taskId: id });
+      }
+    } catch (error) {
+      console.error('Failed to check subtasks:', error);
+      // Fallback to simple confirmation
+      setConfirmDelete({ isOpen: true, taskId: id });
+    }
   };
 
   const confirmDeleteTask = async () => {
@@ -130,6 +188,32 @@ function App() {
       }
     }
     setConfirmDelete({ isOpen: false, taskId: null });
+  };
+
+  const handleDeleteWithSubtasks = async () => {
+    if (deleteTaskOptions.taskId) {
+      try {
+        console.log('Deleting task with subtasks:', deleteTaskOptions.taskId);
+        await deleteTaskWithSubtasks(deleteTaskOptions.taskId);
+        console.log('Task and subtasks deleted successfully');
+      } catch (error) {
+        console.error('Failed to delete task with subtasks:', error);
+      }
+    }
+    setDeleteTaskOptions({ isOpen: false, taskId: null, taskTitle: '', subtaskCount: 0 });
+  };
+
+  const handleDeleteAndPromoteSubtasks = async () => {
+    if (deleteTaskOptions.taskId) {
+      try {
+        console.log('Deleting task and promoting subtasks:', deleteTaskOptions.taskId);
+        await deleteTaskAndPromoteSubtasks(deleteTaskOptions.taskId);
+        console.log('Task deleted and subtasks promoted successfully');
+      } catch (error) {
+        console.error('Failed to delete task and promote subtasks:', error);
+      }
+    }
+    setDeleteTaskOptions({ isOpen: false, taskId: null, taskTitle: '', subtaskCount: 0 });
   };
 
   const cancelDeleteTask = () => {
@@ -164,11 +248,35 @@ function App() {
   const handleBulkDelete = async () => {
     if (selectedTasks.size === 0) return;
     
-    setConfirmBulkAction({
-      isOpen: true,
-      action: 'delete',
-      taskCount: selectedTasks.size
-    });
+    try {
+      // Check which selected tasks have subtasks
+      const taskIds = Array.from(selectedTasks);
+      const tasksWithSubtasks = await bulkCheckTasksHaveSubtasks(taskIds);
+      
+      if (tasksWithSubtasks.length > 0) {
+        // Some tasks have subtasks - show options modal
+        setBulkDeleteOptions({
+          isOpen: true,
+          tasksWithSubtasks: tasksWithSubtasks.length,
+          totalTasks: selectedTasks.size
+        });
+      } else {
+        // No tasks have subtasks - proceed with simple bulk delete
+        setConfirmBulkAction({
+          isOpen: true,
+          action: 'delete',
+          taskCount: selectedTasks.size
+        });
+      }
+    } catch (error) {
+      console.error('Failed to check tasks for subtasks:', error);
+      // Fallback to simple confirmation
+      setConfirmBulkAction({
+        isOpen: true,
+        action: 'delete',
+        taskCount: selectedTasks.size
+      });
+    }
   };
 
   const handleBulkMarkCompleted = async (completed: boolean) => {
@@ -208,6 +316,39 @@ function App() {
 
   const cancelBulkAction = () => {
     setConfirmBulkAction({ isOpen: false, action: null, taskCount: 0 });
+  };
+
+  // Bulk delete options handlers
+  const handleBulkDeleteWithSubtasks = async () => {
+    if (selectedTasks.size === 0) return;
+    
+    try {
+      const taskIds = Array.from(selectedTasks);
+      await bulkDeleteTasksWithSubtasks(taskIds);
+      setSelectedTasks(new Set()); // Clear selection after successful action
+    } catch (error) {
+      console.error('Failed to bulk delete tasks with subtasks:', error);
+    }
+    
+    setBulkDeleteOptions({ isOpen: false, tasksWithSubtasks: 0, totalTasks: 0 });
+  };
+
+  const handleBulkDeleteAndPromoteSubtasks = async () => {
+    if (selectedTasks.size === 0) return;
+    
+    try {
+      const taskIds = Array.from(selectedTasks);
+      await bulkDeleteTasksAndPromoteSubtasks(taskIds);
+      setSelectedTasks(new Set()); // Clear selection after successful action
+    } catch (error) {
+      console.error('Failed to bulk delete tasks and promote subtasks:', error);
+    }
+    
+    setBulkDeleteOptions({ isOpen: false, tasksWithSubtasks: 0, totalTasks: 0 });
+  };
+
+  const cancelBulkDeleteOptions = () => {
+    setBulkDeleteOptions({ isOpen: false, tasksWithSubtasks: 0, totalTasks: 0 });
   };
 
   // Category handlers
@@ -550,6 +691,26 @@ function App() {
         onCancel={cancelDeleteTask}
         confirmText="Delete"
         cancelText="Cancel"
+      />
+
+      {/* Delete Task Options Modal for tasks with subtasks */}
+      <DeleteTaskOptionsModal
+        isOpen={deleteTaskOptions.isOpen}
+        onClose={() => setDeleteTaskOptions({ isOpen: false, taskId: null, taskTitle: '', subtaskCount: 0 })}
+        onDeleteWithSubtasks={handleDeleteWithSubtasks}
+        onDeleteAndPromoteSubtasks={handleDeleteAndPromoteSubtasks}
+        taskTitle={deleteTaskOptions.taskTitle}
+        subtaskCount={deleteTaskOptions.subtaskCount}
+      />
+
+      {/* Bulk Delete Options Modal for bulk operations with subtasks */}
+      <BulkDeleteOptionsModal
+        isOpen={bulkDeleteOptions.isOpen}
+        onClose={cancelBulkDeleteOptions}
+        onDeleteAll={handleBulkDeleteWithSubtasks}
+        onPromoteSubtasks={handleBulkDeleteAndPromoteSubtasks}
+        totalTasks={bulkDeleteOptions.totalTasks}
+        tasksWithSubtasks={bulkDeleteOptions.tasksWithSubtasks}
       />
 
       {/* Bulk Action Confirmation Dialog */}

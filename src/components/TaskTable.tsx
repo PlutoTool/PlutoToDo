@@ -4,6 +4,7 @@ import { Button } from './ui/Button';
 import { Check, Edit2, Trash2, Calendar, Tag } from 'lucide-react';
 import { useTaskStore } from '../stores/taskStore';
 import { SubtaskCompletionModal } from './SubtaskCompletionModal';
+import { DeleteTaskOptionsModal } from './DeleteTaskOptionsModal';
 import { formatDateTime, isOverdue } from '../utils/dateUtils';
 import { getPriorityColor } from '../utils/priorityUtils';
 import { cn } from '../utils/cn';
@@ -29,12 +30,26 @@ export const TaskTable: React.FC<TaskTableProps> = ({
     toggleTaskCompletion, 
     toggleTaskCompletionWithSubtasks,
     getIncompleteSubtasks,
+    deleteTaskWithSubtasks,
+    deleteTaskAndPromoteSubtasks,
+    checkTaskHasSubtasks,
     tasks: allTasks 
   } = useTaskStore();
 
   const [showSubtaskModal, setShowSubtaskModal] = useState(false);
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
   const [incompleteSubtasks, setIncompleteSubtasks] = useState<Task[]>([]);
+  const [deleteTaskOptions, setDeleteTaskOptions] = useState<{ 
+    isOpen: boolean; 
+    taskId: string | null;
+    taskTitle: string;
+    subtaskCount: number;
+  }>({
+    isOpen: false,
+    taskId: null,
+    taskTitle: '',
+    subtaskCount: 0
+  });
 
   const handleToggleCompletion = async (task: Task) => {
     try {
@@ -74,6 +89,57 @@ export const TaskTable: React.FC<TaskTableProps> = ({
     } catch (error) {
       console.error('Failed to complete task with subtasks:', error);
     }
+  };
+
+  const handleDeleteTask = async (task: Task) => {
+    try {
+      // Check if task has subtasks
+      const hasSubtasks = await checkTaskHasSubtasks(task.id);
+      
+      if (hasSubtasks) {
+        // Count direct subtasks for display
+        const directSubtasks = allTasks.filter(t => t.parent_id === task.id);
+        setDeleteTaskOptions({ 
+          isOpen: true, 
+          taskId: task.id,
+          taskTitle: task.title,
+          subtaskCount: directSubtasks.length
+        });
+      } else {
+        // Use the parent's delete handler if no subtasks
+        if (onDeleteTask) {
+          onDeleteTask(task.id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check subtasks:', error);
+      // Fallback to parent's delete handler
+      if (onDeleteTask) {
+        onDeleteTask(task.id);
+      }
+    }
+  };
+
+  const handleDeleteWithSubtasks = async () => {
+    if (deleteTaskOptions.taskId) {
+      try {
+        await deleteTaskWithSubtasks(deleteTaskOptions.taskId);
+      } catch (error) {
+        console.error('Failed to delete task with subtasks:', error);
+      }
+    }
+    setDeleteTaskOptions({ isOpen: false, taskId: null, taskTitle: '', subtaskCount: 0 });
+  };
+
+  const handleDeleteAndPromoteSubtasks = async () => {
+    if (deleteTaskOptions.taskId) {
+      try {
+        await deleteTaskAndPromoteSubtasks(deleteTaskOptions.taskId);
+      } catch (error) {
+        console.error('Failed to delete task and promote subtasks:', error);
+      }
+    }
+    setDeleteTaskOptions({ isOpen: false, taskId: null, taskTitle: '', subtaskCount: 0 });
   };
 
   const handleSelectToggle = (taskId: string) => {
@@ -267,7 +333,7 @@ export const TaskTable: React.FC<TaskTableProps> = ({
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => onDeleteTask(task.id)}
+                            onClick={() => handleDeleteTask(task)}
                             className="h-7 w-7 opacity-70 hover:opacity-100 hover:bg-destructive/10 text-destructive hover:text-destructive"
                           >
                             <Trash2 className="w-3 h-3" />
@@ -301,6 +367,16 @@ export const TaskTable: React.FC<TaskTableProps> = ({
           }))}
         />
       )}
+
+      {/* Delete Task Options Modal for tasks with subtasks */}
+      <DeleteTaskOptionsModal
+        isOpen={deleteTaskOptions.isOpen}
+        onClose={() => setDeleteTaskOptions({ isOpen: false, taskId: null, taskTitle: '', subtaskCount: 0 })}
+        onDeleteWithSubtasks={handleDeleteWithSubtasks}
+        onDeleteAndPromoteSubtasks={handleDeleteAndPromoteSubtasks}
+        taskTitle={deleteTaskOptions.taskTitle}
+        subtaskCount={deleteTaskOptions.subtaskCount}
+      />
     </>
   );
 };
