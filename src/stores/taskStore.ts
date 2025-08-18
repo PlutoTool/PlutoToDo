@@ -174,6 +174,15 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       
       const newTask = await invoke<Task>('create_task', { request: requestObject });
       
+      // If this is a subtask (has parent_id), automatically expand the parent task
+      if (newTask.parent_id) {
+        set(state => {
+          const newExpanded = new Set(state.expandedTasks);
+          newExpanded.add(newTask.parent_id!);
+          return { expandedTasks: newExpanded };
+        });
+      }
+      
       // Add new task and re-sort
       const currentTasks = get().tasks;
       get().setTasks([newTask, ...currentTasks]);
