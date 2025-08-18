@@ -209,7 +209,7 @@ export default function TaskDetailModal({
             <div className="flex items-center gap-3 mb-3">
               <h2 className={cn(
                 "text-xl font-semibold flex-1",
-                currentTask.completed && "line-through text-gray-500"
+                currentTask.completed && "line-through text-gray-500 dark:text-gray-400"
               )}>
                 {currentTask.title}
               </h2>
@@ -224,7 +224,7 @@ export default function TaskDetailModal({
             {/* Completion Status Section */}
             <div className="mb-4">
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-700">Status:</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</span>
                 <Button
                   onClick={handleToggleCompletion}
                   variant={currentTask.completed ? "default" : "outline"}
@@ -232,8 +232,8 @@ export default function TaskDetailModal({
                   className={cn(
                     "transition-all duration-200",
                     currentTask.completed 
-                      ? "bg-green-600 hover:bg-green-700 text-white border-green-600" 
-                      : "border-gray-300 hover:border-green-500 hover:bg-green-50 text-gray-700"
+                      ? "bg-green-600 hover:bg-green-700 text-white border-green-600 dark:bg-green-700 dark:hover:bg-green-800" 
+                      : "border-gray-300 hover:border-green-500 hover:bg-green-50 text-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:border-green-400 dark:hover:bg-green-900/20"
                   )}
                 >
                   {currentTask.completed ? (
@@ -250,7 +250,7 @@ export default function TaskDetailModal({
                 </Button>
               </div>
               {currentTask.completed && (
-                <p className="text-xs text-green-600 mt-1 ml-16">
+                <p className="text-xs text-green-600 dark:text-green-400 mt-1 ml-16">
                   ✓ This task has been completed
                 </p>
               )}
@@ -270,7 +270,7 @@ export default function TaskDetailModal({
               variant="outline"
               size="sm"
               onClick={handleDelete}
-              className="text-red-600 hover:text-red-700 hover:border-red-300"
+              className="text-red-600 hover:text-red-700 hover:border-red-300 dark:text-red-400 dark:hover:text-red-300 dark:hover:border-red-500"
             >
               <Trash2 className="w-4 h-4 mr-1" />
               Delete
@@ -281,8 +281,8 @@ export default function TaskDetailModal({
         {/* Description Section - Full Width */}
         {currentTask.description && (
           <div className="w-full">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Description:</h3>
-            <div className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-lg whitespace-pre-wrap">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description:</h3>
+            <div className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed bg-gray-50 dark:bg-gray-800 p-4 rounded-lg whitespace-pre-wrap">
               {currentTask.description}
             </div>
           </div>
@@ -296,18 +296,18 @@ export default function TaskDetailModal({
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Calendar className="w-4 h-4 text-blue-500" />
-                  <span className="font-medium text-gray-700">Due Date</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">Due Date</span>
                 </div>
                 <p className={cn(
                   "text-sm font-medium",
                   isOverdue(currentTask.due_date) && !currentTask.completed
-                    ? "text-red-600"
-                    : "text-gray-800"
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-gray-800 dark:text-gray-200"
                 )}>
                   {formatDateTime(currentTask.due_date)}
                 </p>
                 {isOverdue(currentTask.due_date) && !currentTask.completed && (
-                  <p className="text-xs text-red-500 mt-1 font-medium">⚠ Overdue</p>
+                  <p className="text-xs text-red-500 dark:text-red-400 mt-1 font-medium">⚠ Overdue</p>
                 )}
               </CardContent>
             </Card>
@@ -319,34 +319,34 @@ export default function TaskDetailModal({
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <FolderOpen className="w-4 h-4 text-purple-500" />
-                  <span className="font-medium text-gray-700">Category</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">Category</span>
                 </div>
-                <p className="text-sm font-medium text-gray-800">{category.name}</p>
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{category.name}</p>
               </CardContent>
             </Card>
           )}
 
           {/* Created */}
-          <Card className="border-l-4 border-l-gray-400">
+          <Card className="border-l-4 border-l-gray-400 dark:border-l-gray-500">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-gray-500" />
-                <span className="font-medium text-gray-700">Created</span>
+                <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                <span className="font-medium text-gray-700 dark:text-gray-300">Created</span>
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 {formatDateTime(currentTask.created_at)}
               </p>
             </CardContent>
           </Card>
 
           {/* Last Updated */}
-          <Card className="border-l-4 border-l-gray-400">
+          <Card className="border-l-4 border-l-gray-400 dark:border-l-gray-500">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-gray-500" />
-                <span className="font-medium text-gray-700">Last Updated</span>
+                <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                <span className="font-medium text-gray-700 dark:text-gray-300">Last Updated</span>
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 {formatDateTime(currentTask.updated_at)}
               </p>
             </CardContent>
@@ -359,8 +359,8 @@ export default function TaskDetailModal({
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Tag className="w-4 h-4 text-orange-500" />
-                <span className="font-medium text-gray-700">Tags</span>
-                <span className="text-xs text-gray-500">({currentTask.tags.length})</span>
+                <span className="font-medium text-gray-700 dark:text-gray-300">Tags</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">({currentTask.tags.length})</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {currentTask.tags.map((tag, index) => (
@@ -384,7 +384,7 @@ export default function TaskDetailModal({
                 <User className="w-4 h-4 text-green-500" />
                 <span className="font-medium">Subtasks</span>
                 {subtasks.length > 0 && (
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
                     ({subtasks.filter(s => s.completed).length}/{subtasks.length} completed)
                   </span>
                 )}
@@ -402,13 +402,13 @@ export default function TaskDetailModal({
             {/* Progress Bar for Subtasks */}
             {subtasks.length > 0 && (
               <div className="mb-4">
-                <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
                   <span>Progress</span>
                   <span>{Math.round((subtasks.filter(s => s.completed).length / subtasks.length) * 100)}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div 
-                    className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-green-600 dark:bg-green-500 h-2 rounded-full transition-all duration-300"
                     style={{ 
                       width: `${(subtasks.filter(s => s.completed).length / subtasks.length) * 100}%` 
                     }}
@@ -432,30 +432,30 @@ export default function TaskDetailModal({
                     <div className={cn(
                       "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium",
                       subtask.completed 
-                        ? "bg-green-100 text-green-700 border-2 border-green-200" 
-                        : "bg-gray-100 text-gray-500 border-2 border-gray-200"
+                        ? "bg-green-100 text-green-700 border-2 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700" 
+                        : "bg-gray-100 text-gray-500 border-2 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600"
                     )}>
                       {subtask.completed ? "✓" : "○"}
                     </div>
                     <div className="flex-1 min-w-0">
                       <span className={cn(
                         "text-sm font-medium block",
-                        subtask.completed && "line-through text-gray-500"
+                        subtask.completed && "line-through text-gray-500 dark:text-gray-400"
                       )}>
                         {subtask.title}
                       </span>
                       {subtask.completed && (
-                        <span className="text-xs text-green-600">Completed</span>
+                        <span className="text-xs text-green-600 dark:text-green-400">Completed</span>
                       )}
                     </div>
                     {subtask.due_date && (
                       <div className="flex-shrink-0 text-right">
-                        <div className="text-xs text-gray-500 mb-1">Due</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Due</div>
                         <span className={cn(
                           "text-xs font-medium",
                           isOverdue(subtask.due_date) && !subtask.completed
-                            ? "text-red-600"
-                            : "text-gray-600"
+                            ? "text-red-600 dark:text-red-400"
+                            : "text-gray-600 dark:text-gray-400"
                         )}>
                           {formatDateTime(subtask.due_date)}
                         </span>
