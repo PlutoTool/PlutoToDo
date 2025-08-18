@@ -14,7 +14,8 @@ import {
   AlertTriangle,
   Info,
   Download,
-  RefreshCw
+  RefreshCw,
+  HelpCircle
 } from 'lucide-react';
 import { useCategoryStore } from '../stores/categoryStore';
 import { useTaskStore } from '../stores/taskStore';
@@ -29,6 +30,7 @@ interface SidebarProps {
   onEditCategory?: (category: any) => void;
   onDeleteCategory?: (categoryId: string) => void;
   onShowAbout?: () => void;
+  onShowHelp?: () => void;
   darkMode?: boolean;
   onToggleDarkMode?: () => void;
   onCollapse?: () => void;
@@ -42,6 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onEditCategory,
   onDeleteCategory,
   onShowAbout,
+  onShowHelp,
   darkMode,
   onToggleDarkMode,
   onCollapse
@@ -350,6 +353,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   Dark Mode
                 </>
               )}
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => {
+                onShowHelp?.();
+                if (isMobile && onCollapse) onCollapse();
+              }}
+            >
+              <HelpCircle className="w-4 h-4 mr-2" />
+              Help & Shortcuts
             </Button>
             
             <Button

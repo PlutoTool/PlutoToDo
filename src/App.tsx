@@ -8,14 +8,16 @@ import { DeleteTaskOptionsModal } from './components/DeleteTaskOptionsModal';
 import { BulkDeleteOptionsModal } from './components/BulkDeleteOptionsModal';
 import { SortDropdown } from './components/SortDropdown';
 import { AboutModal } from './components/AboutModal';
+import { HelpModal } from './components/HelpModal';
 import { Modal } from './components/ui/Modal';
 import { Button } from './components/ui/Button';
 import { Input } from './components/ui/Input';
-import { Task, Category } from './types';
+import { Task, Category, SortField, SortOrder } from './types';
 import { Search, Plus, X, Check, CheckCheck, Trash2, MoreHorizontal, Menu } from 'lucide-react';
 import { useTaskStore } from './stores/taskStore';
 import { useCategoryStore } from './stores/categoryStore';
 import { useSidebar } from './hooks/useSidebar';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 
 function App() {
   // Sidebar management
@@ -27,6 +29,7 @@ function App() {
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | undefined>();
   const [showAbout, setShowAbout] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [darkMode, setDarkMode] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; taskId: string | null }>({
@@ -87,7 +90,9 @@ function App() {
     bulkDeleteTasksAndPromoteSubtasks,
     bulkMarkTasksCompleted, 
     updateTask, 
-    tasks 
+    tasks,
+    sortConfig,
+    setSortConfig
   } = useTaskStore();
   const { deleteCategory } = useCategoryStore();
 
@@ -136,6 +141,100 @@ function App() {
     setParentTaskId(parentId);
     setShowTaskForm(true);
   };
+
+  // Keyboard shortcuts implementation
+  const handleFocusSearch = () => {
+    const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.focus();
+    }
+  };
+
+  const handleSelectAllTasks = () => {
+    const allTaskIds = new Set(tasks.map(task => task.id));
+    setSelectedTasks(allTaskIds);
+  };
+
+  const handleDeselectAllTasks = () => {
+    setSelectedTasks(new Set());
+  };
+
+  const handleQuickSort = (sortIndex: number) => {
+    const sortFields = [
+      SortField.Title,     // 1
+      SortField.DueDate,   // 2
+      SortField.CreatedAt, // 3
+      SortField.UpdatedAt, // 4
+      SortField.Priority,  // 5
+      SortField.Completed  // 6
+    ];
+    
+    const field = sortFields[sortIndex - 1];
+    if (field) {
+      const newOrder = 
+        sortConfig.field === field && sortConfig.order === SortOrder.Asc 
+          ? SortOrder.Desc 
+          : SortOrder.Asc;
+      setSortConfig({ field, order: newOrder });
+    }
+  };
+
+  const handleReverseSortOrder = () => {
+    const newOrder = sortConfig.order === SortOrder.Asc ? SortOrder.Desc : SortOrder.Asc;
+    setSortConfig({ field: sortConfig.field, order: newOrder });
+  };
+
+  const handleEditSelectedTask = () => {
+    if (selectedTasks.size === 1) {
+      const taskId = Array.from(selectedTasks)[0];
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        handleEditTask(task);
+      }
+    }
+  };
+
+  const handleDeleteSelectedTask = () => {
+    if (selectedTasks.size === 1) {
+      const taskId = Array.from(selectedTasks)[0];
+      handleDeleteTask(taskId);
+    }
+  };
+
+  // Use keyboard shortcuts hook
+  useKeyboardShortcuts({
+    callbacks: {
+      // Navigation
+      onCreateTask: handleCreateTask,
+      onFocusSearch: handleFocusSearch,
+      onOpenPreferences: () => setShowHelp(true), // Use help modal as preferences for now
+      
+      // Task Management
+      onEditSelectedTask: handleEditSelectedTask,
+      onDeleteSelectedTask: handleDeleteSelectedTask,
+      onBulkDeleteSelectedTasks: () => {
+        if (selectedTasks.size > 0) {
+          handleBulkDelete();
+        }
+      },
+      onSelectAllTasks: handleSelectAllTasks,
+      onDeselectAllTasks: handleDeselectAllTasks,
+      
+      // Sorting & Filtering
+      onQuickSort: handleQuickSort,
+      onReverseSortOrder: handleReverseSortOrder,
+      onOpenAdvancedFilters: () => {
+        // TODO: Implement advanced filters modal
+        console.log('Open advanced filters (not implemented yet)');
+      }
+    },
+    enabled: true,
+    isModalOpen: showTaskForm || showCategoryForm || showAbout || showHelp ||
+                 confirmDelete.isOpen || deleteTaskOptions.isOpen || 
+                 confirmBulkAction.isOpen || confirmCategoryDelete.isOpen || 
+                 bulkDeleteOptions.isOpen,
+    isFormOpen: showTaskForm || showCategoryForm
+  });
 
   const handleFormSubmit = () => {
     setShowTaskForm(false);
@@ -424,6 +523,7 @@ function App() {
         onEditCategory={handleEditCategory}
         onDeleteCategory={handleDeleteCategory}
         onShowAbout={() => setShowAbout(true)}
+        onShowHelp={() => setShowHelp(true)}
         onCollapse={collapseSidebar}
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
@@ -761,6 +861,11 @@ function App() {
       <AboutModal
         isOpen={showAbout}
         onClose={() => setShowAbout(false)}
+      />
+
+      <HelpModal
+        isOpen={showHelp}
+        onClose={() => setShowHelp(false)}
       />
     </div>
   );
