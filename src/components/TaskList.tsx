@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { TaskItem } from './TaskItem';
 import { SubtaskItem } from './SubtaskItem';
 import { TaskTable } from './TaskTable';
+import TaskDetailModal from './TaskDetailModal';
 import { Task } from '../types';
 import { useTaskStore } from '../stores/taskStore';
 import { Loader2, LayoutGrid, List, TreePine } from 'lucide-react';
@@ -26,14 +27,43 @@ export const TaskList: React.FC<TaskListProps> = ({
   onToggleTaskSelect 
 }) => {
   const { tasks, loading, error, loadTasks, filter, setViewMode } = useTaskStore();
-  const [localViewMode, setLocalViewMode] = useState<ViewMode>('cards');
+  const [localViewMode, setLocalViewMode] = useState<ViewMode>('hierarchy');
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     loadTasks();
   }, [loadTasks, filter]); // React to filter changes
 
+  // Set initial view mode in store
+  useEffect(() => {
+    setViewMode('hierarchical');
+  }, []); // Run only once on mount
+
   // Get root tasks (tasks without parent_id)
   const rootTasks = tasks.filter(task => !task.parent_id);
+
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedTask(null);
+  };
+
+  const handleSubtaskClick = (subtask: Task) => {
+    // Close current modal and open subtask modal
+    setSelectedTask(subtask);
+    setIsModalOpen(true);
+  };
+
+  const handleParentClick = (parentTask: Task) => {
+    // Navigate back to parent task
+    setSelectedTask(parentTask);
+    setIsModalOpen(true);
+  };
 
   if (loading) {
     return (
@@ -132,6 +162,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 isSelected={selectedTasks.has(task.id)}
                 onToggleSelect={onToggleTaskSelect}
                 selectedTasks={selectedTasks}
+                onTaskClick={handleTaskClick}
               />
             </div>
           ))}
@@ -146,6 +177,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 onDelete={onDeleteTask}
                 isSelected={selectedTasks.has(task.id)}
                 onToggleSelect={onToggleTaskSelect}
+                onTaskClick={handleTaskClick}
               />
             </div>
           ))}
@@ -157,8 +189,18 @@ export const TaskList: React.FC<TaskListProps> = ({
           onDeleteTask={onDeleteTask}
           selectedTasks={selectedTasks}
           onToggleTaskSelect={onToggleTaskSelect}
+          onTaskClick={handleTaskClick}
         />
       )}
+
+      {/* Task Detail Modal */}
+      <TaskDetailModal
+        task={selectedTask}
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        onSubtaskClick={handleSubtaskClick}
+        onParentClick={handleParentClick}
+      />
     </div>
   );
 };

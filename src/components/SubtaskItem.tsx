@@ -18,6 +18,7 @@ interface SubtaskItemProps {
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
   selectedTasks?: Set<string>; // Add this to track all selected tasks
+  onTaskClick?: (task: TaskType) => void;
 }
 
 export const SubtaskItem: React.FC<SubtaskItemProps> = ({ 
@@ -28,7 +29,8 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
   onAddSubtask,
   isSelected = false, 
   onToggleSelect,
-  selectedTasks // Add this prop
+  selectedTasks, // Add this prop
+  onTaskClick
 }) => {
   const { 
     toggleTaskCompletion, 
@@ -131,8 +133,17 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
 
   const handleSelectToggle = () => {
     if (onToggleSelect) {
-      console.log('Toggle select called for task:', task.id, 'current selected:', isSelected);
       onToggleSelect(task.id);
+    }
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't trigger card click if clicking on buttons or checkboxes
+    const target = e.target as HTMLElement;
+    const isInteractiveElement = target.closest('button') || target.closest('input');
+    
+    if (!isInteractiveElement && onTaskClick) {
+      onTaskClick(task);
     }
   };
 
@@ -141,11 +152,14 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
   return (
     <>
       <div className={cn('transition-all duration-200', depth > 0 && 'ml-6')}>
-        <Card className={cn(
-          'transition-all duration-200 hover:shadow-md',
-          task.completed && 'opacity-70 bg-muted/50',
-          depth > 0 && 'border-l-4 border-l-primary/20'
-        )}>
+        <Card 
+          className={cn(
+            'transition-all duration-200 hover:shadow-md cursor-pointer',
+            task.completed && 'opacity-70 bg-muted/50',
+            depth > 0 && 'border-l-4 border-l-primary/20'
+          )}
+          onClick={handleCardClick}
+        >
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
               {/* Bulk Selection Checkbox */}
@@ -347,6 +361,7 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
                   isSelected={selectedTasks?.has(subtask.id) || false}
                   onToggleSelect={onToggleSelect}
                   selectedTasks={selectedTasks}
+                  onTaskClick={onTaskClick}
                 />
               ))
             )}

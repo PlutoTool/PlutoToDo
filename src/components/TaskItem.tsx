@@ -15,6 +15,7 @@ interface TaskItemProps {
   onDelete?: (id: string) => void;
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
+  onTaskClick?: (task: TaskType) => void;
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({ 
@@ -22,7 +23,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onEdit, 
   onDelete, 
   isSelected = false, 
-  onToggleSelect 
+  onToggleSelect,
+  onTaskClick 
 }) => {
   const { 
     toggleTaskCompletion, 
@@ -77,14 +79,27 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     }
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't trigger card click if clicking on buttons or checkboxes
+    const target = e.target as HTMLElement;
+    const isInteractiveElement = target.closest('button') || target.closest('input');
+    
+    if (!isInteractiveElement && onTaskClick) {
+      onTaskClick(task);
+    }
+  };
+
   const isTaskOverdue = task.due_date && !task.completed && isOverdue(task.due_date);
 
   return (
     <>
-      <Card className={cn(
-        'transition-all duration-200 hover:shadow-md',
-        task.completed && 'opacity-70 bg-muted/50'
-      )}>
+      <Card 
+        className={cn(
+          'transition-all duration-200 hover:shadow-md cursor-pointer',
+          task.completed && 'opacity-70 bg-muted/50'
+        )}
+        onClick={handleCardClick}
+      >
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             {/* Bulk Selection Checkbox */}
@@ -155,12 +170,20 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
               {/* Description */}
               {task.description && (
-                <p className={cn(
-                  'text-sm text-muted-foreground mt-1 line-clamp-2',
+                <div className={cn(
+                  'text-sm text-muted-foreground mt-1',
                   task.completed && 'line-through'
-                )}>
+                )}
+                  style={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    whiteSpace: 'pre-line'
+                  }}
+                >
                   {task.description}
-                </p>
+                </div>
               )}
 
               {/* Meta information - restructured with due date prominence */}

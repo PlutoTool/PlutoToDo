@@ -38,7 +38,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
       title="About Pluto: To-do"
       size="md"
     >
-      <div className="space-y-6">
+      <div className="p-6 space-y-6">
         {/* App Info */}
         <div className="text-center">
           <div className="flex items-center justify-center mb-3">

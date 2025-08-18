@@ -14,6 +14,7 @@ interface TaskTableProps {
   onDeleteTask?: (id: string) => void;
   selectedTasks?: Set<string>;
   onToggleTaskSelect?: (id: string) => void;
+  onTaskClick?: (task: Task) => void;
 }
 
 export const TaskTable: React.FC<TaskTableProps> = ({ 
@@ -21,7 +22,8 @@ export const TaskTable: React.FC<TaskTableProps> = ({
   onEditTask, 
   onDeleteTask, 
   selectedTasks = new Set(), 
-  onToggleTaskSelect 
+  onToggleTaskSelect,
+  onTaskClick 
 }) => {
   const { 
     toggleTaskCompletion, 
@@ -80,6 +82,16 @@ export const TaskTable: React.FC<TaskTableProps> = ({
     }
   };
 
+  const handleRowClick = (task: Task, e: React.MouseEvent) => {
+    // Don't trigger row click if clicking on buttons or checkboxes
+    const target = e.target as HTMLElement;
+    const isInteractiveElement = target.closest('button') || target.closest('input');
+    
+    if (!isInteractiveElement && onTaskClick) {
+      onTaskClick(task);
+    }
+  };
+
   if (tasks.length === 0) {
     return (
       <div className="text-center py-8">
@@ -127,10 +139,11 @@ export const TaskTable: React.FC<TaskTableProps> = ({
                   <tr 
                     key={task.id} 
                     className={cn(
-                      "hover:bg-muted/30 transition-colors",
+                      "hover:bg-muted/30 transition-colors cursor-pointer",
                       task.completed && 'opacity-70',
                       isSelected && 'bg-primary/5 border-primary/20'
                     )}
+                    onClick={(e) => handleRowClick(task, e)}
                   >
                     {/* Selection Checkbox */}
                     <td className="p-3">
@@ -158,10 +171,12 @@ export const TaskTable: React.FC<TaskTableProps> = ({
                         </h3>
                         {task.description && (
                           <p className={cn(
-                            'text-xs text-muted-foreground truncate max-w-xs',
+                            'text-xs text-muted-foreground line-clamp-1 max-w-[200px] break-words',
                             task.completed && 'line-through'
-                          )}>
-                            {task.description}
+                          )}
+                            title={task.description} // Show full text on hover
+                          >
+                            {task.description.replace(/\n/g, ' ')}
                           </p>
                         )}
                       </div>

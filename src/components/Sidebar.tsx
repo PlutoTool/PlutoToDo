@@ -171,7 +171,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Navigation */}
-          <div className="flex-1 px-4 pb-4">
+          <div className="flex-1 px-4 pb-4 overflow-y-auto">
             <div className="space-y-1">
               {menuItems.map((item) => (
                 <Button
