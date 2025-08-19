@@ -5,6 +5,7 @@ import { Check, Tag, Calendar, Edit2, Trash2, Plus, ChevronDown, ChevronRight } 
 import { Task as TaskType, TaskProgress } from '../types';
 import { useTaskStore } from '../stores/taskStore';
 import { SubtaskCompletionModal } from './SubtaskCompletionModal';
+import { DeleteTaskOptionsModal } from './DeleteTaskOptionsModal';
 import { formatDateTime, isOverdue } from '../utils/dateUtils';
 import { getPriorityColor } from '../utils/priorityUtils';
 import { cn } from '../utils/cn';
@@ -18,6 +19,8 @@ interface SubtaskItemProps {
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
   selectedTasks?: Set<string>; // Add this to track all selected tasks
+  onTaskClick?: (task: TaskType) => void;
+  isInsideModal?: boolean;
 }
 
 export const SubtaskItem: React.FC<SubtaskItemProps> = ({ 
@@ -28,12 +31,17 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
   onAddSubtask,
   isSelected = false, 
   onToggleSelect,
-  selectedTasks // Add this prop
+  selectedTasks, // Add this prop
+  onTaskClick,
+  isInsideModal = false
 }) => {
   const { 
     toggleTaskCompletion, 
     toggleTaskCompletionWithSubtasks,
     getIncompleteSubtasks,
+    checkTaskHasSubtasks,
+    deleteTaskWithSubtasks,
+    deleteTaskAndPromoteSubtasks,
     expandedTasks, 
     toggleTaskExpansion, 
     calculateTaskProgress,
@@ -44,6 +52,17 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
   const [loadingSubtasks] = useState(false); // Keep for loading state display
   const [showSubtaskModal, setShowSubtaskModal] = useState(false);
   const [incompleteSubtasks, setIncompleteSubtasks] = useState<TaskType[]>([]);
+  const [deleteTaskOptions, setDeleteTaskOptions] = useState<{ 
+    isOpen: boolean; 
+    taskId: string | null;
+    taskTitle: string;
+    subtaskCount: number;
+  }>({
+    isOpen: false,
+    taskId: null,
+    taskTitle: '',
+    subtaskCount: 0
+  });
 
   const isExpanded = expandedTasks.has(task.id);
   
@@ -125,14 +144,74 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
     }
   };
 
+  const handleDeleteTask = async () => {
+    try {
+      // Check if task has subtasks
+      const hasSubtasks = await checkTaskHasSubtasks(task.id);
+      
+      if (hasSubtasks) {
+        // Count direct subtasks for display
+        const directSubtasks = tasks.filter(t => t.parent_id === task.id);
+        setDeleteTaskOptions({ 
+          isOpen: true, 
+          taskId: task.id,
+          taskTitle: task.title,
+          subtaskCount: directSubtasks.length
+        });
+      } else {
+        // Use the parent's delete handler if no subtasks
+        if (onDelete) {
+          onDelete(task.id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check subtasks:', error);
+      // Fallback to parent's delete handler
+      if (onDelete) {
+        onDelete(task.id);
+      }
+    }
+  };
+
+  const handleDeleteWithSubtasks = async () => {
+    if (deleteTaskOptions.taskId) {
+      try {
+        await deleteTaskWithSubtasks(deleteTaskOptions.taskId);
+      } catch (error) {
+        console.error('Failed to delete task with subtasks:', error);
+      }
+    }
+    setDeleteTaskOptions({ isOpen: false, taskId: null, taskTitle: '', subtaskCount: 0 });
+  };
+
+  const handleDeleteAndPromoteSubtasks = async () => {
+    if (deleteTaskOptions.taskId) {
+      try {
+        await deleteTaskAndPromoteSubtasks(deleteTaskOptions.taskId);
+      } catch (error) {
+        console.error('Failed to delete task and promote subtasks:', error);
+      }
+    }
+    setDeleteTaskOptions({ isOpen: false, taskId: null, taskTitle: '', subtaskCount: 0 });
+  };
+
   const handleToggleExpansion = () => {
     toggleTaskExpansion(task.id);
   };
 
   const handleSelectToggle = () => {
     if (onToggleSelect) {
-      console.log('Toggle select called for task:', task.id, 'current selected:', isSelected);
       onToggleSelect(task.id);
+    }
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't trigger card click if clicking on buttons or checkboxes
+    const target = e.target as HTMLElement;
+    const isInteractiveElement = target.closest('button') || target.closest('input');
+    
+    if (!isInteractiveElement && onTaskClick) {
+      onTaskClick(task);
     }
   };
 
@@ -141,11 +220,14 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
   return (
     <>
       <div className={cn('transition-all duration-200', depth > 0 && 'ml-6')}>
-        <Card className={cn(
-          'transition-all duration-200 hover:shadow-md',
-          task.completed && 'opacity-70 bg-muted/50',
-          depth > 0 && 'border-l-4 border-l-primary/20'
-        )}>
+        <Card 
+          className={cn(
+            'transition-all duration-200 hover:shadow-md cursor-pointer',
+            task.completed && 'opacity-70 bg-muted/50',
+            depth > 0 && 'border-l-4 border-l-primary/20'
+          )}
+          onClick={handleCardClick}
+        >
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
               {/* Bulk Selection Checkbox */}
@@ -254,7 +336,7 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => onDelete(task.id)}
+                        onClick={handleDeleteTask}
                         className="h-8 w-8 opacity-70 hover:opacity-100 hover:bg-destructive/10 transition-all text-destructive hover:text-destructive"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -347,6 +429,8 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
                   isSelected={selectedTasks?.has(subtask.id) || false}
                   onToggleSelect={onToggleSelect}
                   selectedTasks={selectedTasks}
+                  onTaskClick={onTaskClick}
+                  isInsideModal={isInsideModal}
                 />
               ))
             )}
@@ -366,6 +450,20 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
           title: subtask.title,
           depth: index // This could be calculated better with actual depth
         }))}
+        zIndex={isInsideModal ? 'z-[60]' : 'z-50'}
+        showBackdrop={!isInsideModal}
+      />
+
+      {/* Delete Task Options Modal for tasks with subtasks */}
+      <DeleteTaskOptionsModal
+        isOpen={deleteTaskOptions.isOpen}
+        onClose={() => setDeleteTaskOptions({ isOpen: false, taskId: null, taskTitle: '', subtaskCount: 0 })}
+        onDeleteWithSubtasks={handleDeleteWithSubtasks}
+        onDeleteAndPromoteSubtasks={handleDeleteAndPromoteSubtasks}
+        taskTitle={deleteTaskOptions.taskTitle}
+        subtaskCount={deleteTaskOptions.subtaskCount}
+        zIndex={isInsideModal ? 'z-[60]' : 'z-50'}
+        showBackdrop={!isInsideModal}
       />
     </>
   );

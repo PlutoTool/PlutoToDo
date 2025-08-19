@@ -288,6 +288,65 @@ impl<'a> TaskRepository<'a> {
         Ok(())
     }
 
+    pub fn delete_task_and_promote_subtasks(&self, task_id: &str) -> Result<()> {
+        // Get the task to be deleted
+        let task = self.get_by_id(task_id)?
+            .ok_or_else(|| rusqlite::Error::QueryReturnedNoRows)?;
+        
+        // Get direct subtasks (only immediate children)
+        let direct_subtasks = self.get_direct_subtasks(task_id)?;
+        
+        // Update all direct subtasks to have the same parent as the task being deleted
+        for mut subtask in direct_subtasks {
+            subtask.parent_id = task.parent_id.clone();
+            subtask.updated_at = chrono::Utc::now().naive_utc();
+            self.update(&subtask)?;
+        }
+        
+        // Now delete the task (it should have no children anymore)
+        self.delete(task_id)?;
+        
+        Ok(())
+    }
+
+    pub fn get_direct_subtasks(&self, parent_id: &str) -> Result<Vec<Task>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, title, description, completed, priority, due_date, category_id, parent_id, created_at, updated_at
+             FROM tasks WHERE parent_id = ?1 ORDER BY created_at ASC",
+        )?;
+
+        let task_iter = stmt.query_map(params![parent_id], |row| {
+            Ok(Task {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                description: row.get(2)?,
+                completed: row.get(3)?,
+                priority: Priority::from_string(&row.get::<_, String>(4)?),
+                due_date: row.get(5)?,
+                category_id: row.get(6)?,
+                parent_id: row.get(7)?,
+                created_at: row.get(8)?,
+                updated_at: row.get(9)?,
+                tags: vec![], // Will be populated below
+            })
+        })?;
+
+        let mut tasks = Vec::new();
+        for task_result in task_iter {
+            let mut task = task_result?;
+            task.tags = self.get_task_tags(&task.id)?;
+            tasks.push(task);
+        }
+
+        Ok(tasks)
+    }
+
+    pub fn has_subtasks(&self, task_id: &str) -> Result<bool> {
+        let mut stmt = self.conn.prepare("SELECT COUNT(*) FROM tasks WHERE parent_id = ?1")?;
+        let count: i64 = stmt.query_row(params![task_id], |row| row.get(0))?;
+        Ok(count > 0)
+    }
+
     pub fn get_root_tasks(&self) -> Result<Vec<Task>> {
         let _filter = TaskFilter {
             completed: None,

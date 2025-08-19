@@ -5,6 +5,7 @@ import { Check, Tag, Calendar, Edit2, Trash2 } from 'lucide-react';
 import { Task as TaskType } from '../types';
 import { useTaskStore } from '../stores/taskStore';
 import { SubtaskCompletionModal } from './SubtaskCompletionModal';
+import { DeleteTaskOptionsModal } from './DeleteTaskOptionsModal';
 import { formatDateTime, isOverdue } from '../utils/dateUtils';
 import { getPriorityColor } from '../utils/priorityUtils';
 import { cn } from '../utils/cn';
@@ -15,6 +16,8 @@ interface TaskItemProps {
   onDelete?: (id: string) => void;
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
+  onTaskClick?: (task: TaskType) => void;
+  isInsideModal?: boolean;
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({ 
@@ -22,17 +25,33 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onEdit, 
   onDelete, 
   isSelected = false, 
-  onToggleSelect 
+  onToggleSelect,
+  onTaskClick,
+  isInsideModal = false
 }) => {
   const { 
     toggleTaskCompletion, 
     toggleTaskCompletionWithSubtasks,
     getIncompleteSubtasks,
+    deleteTaskWithSubtasks,
+    deleteTaskAndPromoteSubtasks,
+    checkTaskHasSubtasks,
     tasks: allTasks 
   } = useTaskStore();
 
   const [showSubtaskModal, setShowSubtaskModal] = useState(false);
   const [incompleteSubtasks, setIncompleteSubtasks] = useState<TaskType[]>([]);
+  const [deleteTaskOptions, setDeleteTaskOptions] = useState<{ 
+    isOpen: boolean; 
+    taskId: string | null;
+    taskTitle: string;
+    subtaskCount: number;
+  }>({
+    isOpen: false,
+    taskId: null,
+    taskTitle: '',
+    subtaskCount: 0
+  });
 
   const handleToggleCompletion = async () => {
     try {
@@ -71,9 +90,70 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     }
   };
 
+  const handleDeleteTask = async () => {
+    try {
+      // Check if task has subtasks
+      const hasSubtasks = await checkTaskHasSubtasks(task.id);
+      
+      if (hasSubtasks) {
+        // Count direct subtasks for display
+        const directSubtasks = allTasks.filter(t => t.parent_id === task.id);
+        setDeleteTaskOptions({ 
+          isOpen: true, 
+          taskId: task.id,
+          taskTitle: task.title,
+          subtaskCount: directSubtasks.length
+        });
+      } else {
+        // Use the parent's delete handler if no subtasks
+        if (onDelete) {
+          onDelete(task.id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check subtasks:', error);
+      // Fallback to parent's delete handler
+      if (onDelete) {
+        onDelete(task.id);
+      }
+    }
+  };
+
+  const handleDeleteWithSubtasks = async () => {
+    if (deleteTaskOptions.taskId) {
+      try {
+        await deleteTaskWithSubtasks(deleteTaskOptions.taskId);
+      } catch (error) {
+        console.error('Failed to delete task with subtasks:', error);
+      }
+    }
+    setDeleteTaskOptions({ isOpen: false, taskId: null, taskTitle: '', subtaskCount: 0 });
+  };
+
+  const handleDeleteAndPromoteSubtasks = async () => {
+    if (deleteTaskOptions.taskId) {
+      try {
+        await deleteTaskAndPromoteSubtasks(deleteTaskOptions.taskId);
+      } catch (error) {
+        console.error('Failed to delete task and promote subtasks:', error);
+      }
+    }
+    setDeleteTaskOptions({ isOpen: false, taskId: null, taskTitle: '', subtaskCount: 0 });
+  };
+
   const handleSelectToggle = () => {
     if (onToggleSelect) {
       onToggleSelect(task.id);
+    }
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't trigger card click if clicking on buttons or checkboxes
+    const target = e.target as HTMLElement;
+    const isInteractiveElement = target.closest('button') || target.closest('input');
+    
+    if (!isInteractiveElement && onTaskClick) {
+      onTaskClick(task);
     }
   };
 
@@ -81,10 +161,13 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
   return (
     <>
-      <Card className={cn(
-        'transition-all duration-200 hover:shadow-md',
-        task.completed && 'opacity-70 bg-muted/50'
-      )}>
+      <Card 
+        className={cn(
+          'transition-all duration-200 hover:shadow-md cursor-pointer',
+          task.completed && 'opacity-70 bg-muted/50'
+        )}
+        onClick={handleCardClick}
+      >
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             {/* Bulk Selection Checkbox */}
@@ -143,7 +226,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                       size="icon"
                       onClick={() => {
                         console.log('Delete button clicked for task:', task.id);
-                        onDelete(task.id);
+                        handleDeleteTask();
                       }}
                       className="h-8 w-8 opacity-70 hover:opacity-100 hover:bg-destructive/10 transition-all text-destructive hover:text-destructive"
                     >
@@ -155,12 +238,20 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
               {/* Description */}
               {task.description && (
-                <p className={cn(
-                  'text-sm text-muted-foreground mt-1 line-clamp-2',
+                <div className={cn(
+                  'text-sm text-muted-foreground mt-1',
                   task.completed && 'line-through'
-                )}>
+                )}
+                  style={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    whiteSpace: 'pre-line'
+                  }}
+                >
                   {task.description}
-                </p>
+                </div>
               )}
 
               {/* Meta information - restructured with due date prominence */}
@@ -230,6 +321,20 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           title: subtask.title,
           depth: index // This could be calculated better with actual depth
         }))}
+        zIndex={isInsideModal ? 'z-[60]' : 'z-50'}
+        showBackdrop={!isInsideModal}
+      />
+
+      {/* Delete Task Options Modal for tasks with subtasks */}
+      <DeleteTaskOptionsModal
+        isOpen={deleteTaskOptions.isOpen}
+        onClose={() => setDeleteTaskOptions({ isOpen: false, taskId: null, taskTitle: '', subtaskCount: 0 })}
+        onDeleteWithSubtasks={handleDeleteWithSubtasks}
+        onDeleteAndPromoteSubtasks={handleDeleteAndPromoteSubtasks}
+        taskTitle={deleteTaskOptions.taskTitle}
+        subtaskCount={deleteTaskOptions.subtaskCount}
+        zIndex={isInsideModal ? 'z-[60]' : 'z-50'}
+        showBackdrop={!isInsideModal}
       />
     </>
   );

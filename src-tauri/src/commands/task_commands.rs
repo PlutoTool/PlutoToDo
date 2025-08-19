@@ -2,7 +2,8 @@ use std::sync::Mutex;
 use tauri::State;
 use crate::database::{Database, TaskRepository};
 use crate::models::{Task, CreateTaskRequest, UpdateTaskRequest, TaskFilter};
-use chrono::DateTime;
+
+// Task command handlers for the Tauri application
 
 #[tauri::command]
 pub async fn create_task(
@@ -44,14 +45,7 @@ pub async fn get_task_by_id(
 pub async fn update_task(
     db: State<'_, Mutex<Database>>,
     id: String,
-    title: Option<String>,
-    description: Option<String>,
-    completed: Option<bool>,
-    priority: Option<String>,
-    due_date: Option<String>,
-    category_id: Option<String>,
-    tags: Option<Vec<String>>,
-    parent_id: Option<String>,
+    request: UpdateTaskRequest,
 ) -> Result<Task, String> {
     let db_lock = db.lock().map_err(|e| format!("Database lock error: {}", e))?;
     let task_repo = TaskRepository::new(&db_lock.connection);
@@ -61,27 +55,8 @@ pub async fn update_task(
         .map_err(|e| format!("Failed to get task: {}", e))?
         .ok_or_else(|| "Task not found".to_string())?;
     
-    let request = UpdateTaskRequest {
-        title,
-        description,
-        completed,
-        priority: priority.map(|p| crate::models::Priority::from_string(&p)),
-        due_date: due_date.and_then(|d| {
-            DateTime::parse_from_rfc3339(&d)
-                .or_else(|_| {
-                    // Try parsing as date only (YYYY-MM-DD)
-                    let datetime_str = format!("{}T00:00:00Z", d);
-                    DateTime::parse_from_rfc3339(&datetime_str)
-                })
-                .ok()
-                .map(|dt| dt.naive_utc())
-        }),
-        category_id,
-        tags,
-        parent_id,
-    };
-    
     task.update(request);
+    
     task_repo.update(&task).map_err(|e| format!("Failed to update task: {}", e))?;
     
     Ok(task)
@@ -96,6 +71,39 @@ pub async fn delete_task(
     let task_repo = TaskRepository::new(&db_lock.connection);
     
     task_repo.delete(&id).map_err(|e| format!("Failed to delete task: {}", e))
+}
+
+#[tauri::command]
+pub async fn delete_task_with_subtasks(
+    db: State<'_, Mutex<Database>>,
+    id: String,
+) -> Result<(), String> {
+    let db_lock = db.lock().map_err(|e| format!("Database lock error: {}", e))?;
+    let task_repo = TaskRepository::new(&db_lock.connection);
+    
+    task_repo.delete_task_and_subtasks(&id).map_err(|e| format!("Failed to delete task with subtasks: {}", e))
+}
+
+#[tauri::command]
+pub async fn delete_task_and_promote_subtasks(
+    db: State<'_, Mutex<Database>>,
+    id: String,
+) -> Result<(), String> {
+    let db_lock = db.lock().map_err(|e| format!("Database lock error: {}", e))?;
+    let task_repo = TaskRepository::new(&db_lock.connection);
+    
+    task_repo.delete_task_and_promote_subtasks(&id).map_err(|e| format!("Failed to delete task and promote subtasks: {}", e))
+}
+
+#[tauri::command]
+pub async fn check_task_has_subtasks(
+    db: State<'_, Mutex<Database>>,
+    id: String,
+) -> Result<bool, String> {
+    let db_lock = db.lock().map_err(|e| format!("Database lock error: {}", e))?;
+    let task_repo = TaskRepository::new(&db_lock.connection);
+    
+    task_repo.has_subtasks(&id).map_err(|e| format!("Failed to check subtasks: {}", e))
 }
 
 #[tauri::command]
@@ -291,4 +299,53 @@ pub struct TaskProgress {
     pub completed_subtasks: i32,
     pub progress_percentage: f32,
     pub has_subtasks: bool,
+}
+
+#[tauri::command]
+pub async fn bulk_check_tasks_have_subtasks(
+    db: State<'_, Mutex<Database>>,
+    ids: Vec<String>,
+) -> Result<Vec<String>, String> {
+    let db_lock = db.lock().map_err(|e| format!("Database lock error: {}", e))?;
+    let task_repo = TaskRepository::new(&db_lock.connection);
+    
+    let mut tasks_with_subtasks = Vec::new();
+    
+    for id in ids {
+        if task_repo.has_subtasks(&id).map_err(|e| format!("Failed to check subtasks: {}", e))? {
+            tasks_with_subtasks.push(id);
+        }
+    }
+    
+    Ok(tasks_with_subtasks)
+}
+
+#[tauri::command]
+pub async fn bulk_delete_tasks_with_subtasks(
+    db: State<'_, Mutex<Database>>,
+    ids: Vec<String>,
+) -> Result<(), String> {
+    let db_lock = db.lock().map_err(|e| format!("Database lock error: {}", e))?;
+    let task_repo = TaskRepository::new(&db_lock.connection);
+    
+    for id in ids {
+        task_repo.delete_task_and_subtasks(&id).map_err(|e| format!("Failed to delete task with subtasks: {}", e))?;
+    }
+    
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn bulk_delete_tasks_and_promote_subtasks(
+    db: State<'_, Mutex<Database>>,
+    ids: Vec<String>,
+) -> Result<(), String> {
+    let db_lock = db.lock().map_err(|e| format!("Database lock error: {}", e))?;
+    let task_repo = TaskRepository::new(&db_lock.connection);
+    
+    for id in ids {
+        task_repo.delete_task_and_promote_subtasks(&id).map_err(|e| format!("Failed to delete task and promote subtasks: {}", e))?;
+    }
+    
+    Ok(())
 }

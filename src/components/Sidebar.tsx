@@ -14,7 +14,8 @@ import {
   AlertTriangle,
   Info,
   Download,
-  RefreshCw
+  RefreshCw,
+  HelpCircle
 } from 'lucide-react';
 import { useCategoryStore } from '../stores/categoryStore';
 import { useTaskStore } from '../stores/taskStore';
@@ -29,6 +30,7 @@ interface SidebarProps {
   onEditCategory?: (category: any) => void;
   onDeleteCategory?: (categoryId: string) => void;
   onShowAbout?: () => void;
+  onShowHelp?: () => void;
   darkMode?: boolean;
   onToggleDarkMode?: () => void;
   onCollapse?: () => void;
@@ -42,12 +44,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onEditCategory,
   onDeleteCategory,
   onShowAbout,
+  onShowHelp,
   darkMode,
   onToggleDarkMode,
   onCollapse
 }) => {
   const { categories, loadCategories } = useCategoryStore();
-  const { setFilter, filter } = useTaskStore();
+  const { setFilter, filter, allTasks } = useTaskStore();
   const { updateInfo, isChecking, checkForUpdates, error } = useUpdateChecker();
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showUpdateResult, setShowUpdateResult] = useState(false);
@@ -61,6 +64,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
     loadCategories();
   }, [loadCategories]);
 
+  // Calculate task counts for different filters
+  const getTaskCount = (filterType: string, categoryId?: string) => {
+    const now = new Date();
+    const today = new Date().toISOString().split('T')[0];
+    
+    switch (filterType) {
+      case 'all':
+        return allTasks.length;
+      case 'today':
+        return allTasks.filter(task => {
+          if (!task.due_date) return false;
+          const taskDate = new Date(task.due_date).toISOString().split('T')[0];
+          return taskDate === today;
+        }).length;
+      case 'overdue':
+        return allTasks.filter(task => {
+          if (!task.due_date || task.completed) return false;
+          return new Date(task.due_date) < now;
+        }).length;
+      case 'completed':
+        return allTasks.filter(task => task.completed).length;
+      case 'pending':
+        return allTasks.filter(task => !task.completed).length;
+      case 'category':
+        return allTasks.filter(task => task.category_id === categoryId).length;
+      case 'no_category':
+        return allTasks.filter(task => !task.category_id).length;
+      default:
+        return 0;
+    }
+  };
+
   const handleFilterChange = (newFilter: any) => {
     setFilter({ ...filter, ...newFilter });
     // Auto-close sidebar on mobile when a filter is selected
@@ -73,12 +108,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       label: 'All Tasks',
       icon: Home,
+      count: getTaskCount('all'),
       onClick: () => handleFilterChange({ completed: undefined, category_id: undefined, no_category: undefined, due_before: undefined, due_after: undefined }),
       active: !filter.completed && !filter.category_id && !filter.no_category && !filter.due_before && !filter.due_after,
     },
     {
       label: 'Today',
       icon: Calendar,
+      count: getTaskCount('today'),
       onClick: () => {
         const today = new Date().toISOString().split('T')[0];
         handleFilterChange({ 
@@ -96,6 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       label: 'Overdue',
       icon: AlertTriangle,
+      count: getTaskCount('overdue'),
       onClick: () => {
         const now = new Date().toISOString();
         handleFilterChange({ 
@@ -112,12 +150,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       label: 'Completed',
       icon: CheckSquare,
+      count: getTaskCount('completed'),
       onClick: () => handleFilterChange({ completed: true, category_id: undefined, no_category: undefined, due_before: undefined, due_after: undefined }),
       active: filter.completed === true,
     },
     {
       label: 'Pending',
       icon: Circle,
+      count: getTaskCount('pending'),
       onClick: () => handleFilterChange({ completed: false, category_id: undefined, no_category: undefined, due_before: undefined, due_after: undefined }),
       active: filter.completed === false && !filter.category_id && !filter.no_category && !filter.due_before && !filter.due_after,
     },
@@ -171,18 +211,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Navigation */}
-          <div className="flex-1 px-4 pb-4">
+          <div className="flex-1 px-4 pb-4 overflow-y-auto">
             <div className="space-y-1">
               {menuItems.map((item) => (
                 <Button
                   key={item.label}
                   variant={item.active ? "secondary" : "ghost"}
-                  className="w-full justify-start"
+                  className="w-full justify-between"
                   size="sm"
                   onClick={item.onClick}
                 >
-                  <item.icon className="w-4 h-4 mr-2" />
-                  {item.label}
+                  <div className="flex items-center">
+                    <item.icon className="w-4 h-4 mr-2" />
+                    {item.label}
+                  </div>
+                  {item.count > 0 && (
+                    <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                      {item.count}
+                    </span>
+                  )}
                 </Button>
               ))}
             </div>
@@ -208,7 +255,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {/* No Category Option */}
                 <Button
                   variant={filter.no_category === true ? "secondary" : "ghost"}
-                  className="w-full justify-start"
+                  className="w-full justify-between"
                   size="sm"
                   onClick={() => handleFilterChange({ 
                     category_id: undefined, 
@@ -218,8 +265,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     due_after: undefined
                   })}
                 >
-                  <Inbox className="w-3 h-3 mr-2 text-muted-foreground" />
-                  No Category
+                  <div className="flex items-center">
+                    <Inbox className="w-3 h-3 mr-2 text-muted-foreground" />
+                    No Category
+                  </div>
+                  {getTaskCount('no_category') > 0 && (
+                    <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                      {getTaskCount('no_category')}
+                    </span>
+                  )}
                 </Button>
                 
                 {categories.map((category) => (
@@ -229,7 +283,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   >
                     <Button
                       variant={filter.category_id === category.id ? "secondary" : "ghost"}
-                      className="flex-1 justify-start"
+                      className="flex-1 justify-between"
                       size="sm"
                       onClick={() => handleFilterChange({ 
                         category_id: category.id, 
@@ -239,11 +293,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         due_after: undefined
                       })}
                     >
-                      <div 
-                        className="w-3 h-3 rounded-full mr-2"
-                        style={{ backgroundColor: category.color }}
-                      />
-                      {category.name}
+                      <div className="flex items-center">
+                        <div 
+                          className="w-3 h-3 rounded-full mr-2"
+                          style={{ backgroundColor: category.color }}
+                        />
+                        {category.name}
+                      </div>
+                      {getTaskCount('category', category.id) > 0 && (
+                        <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                          {getTaskCount('category', category.id)}
+                        </span>
+                      )}
                     </Button>
                     
                     {/* Category Actions */}
@@ -350,6 +411,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   Dark Mode
                 </>
               )}
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => {
+                onShowHelp?.();
+                if (isMobile && onCollapse) onCollapse();
+              }}
+            >
+              <HelpCircle className="w-4 h-4 mr-2" />
+              Help & Shortcuts
             </Button>
             
             <Button

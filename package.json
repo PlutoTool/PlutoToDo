@@ -1,9 +1,10 @@
 {
   "name": "pluto-todo",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "module",
   "description": "Pluto: To-do - A modern, elegant cross-platform todo application",
+  "license": "LGPL-3.0",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

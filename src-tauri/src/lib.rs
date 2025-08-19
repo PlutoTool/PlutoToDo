@@ -40,6 +40,9 @@ pub fn run() {
             get_task_by_id,
             update_task,
             delete_task,
+            delete_task_with_subtasks,
+            delete_task_and_promote_subtasks,
+            check_task_has_subtasks,
             toggle_task_completion,
             search_tasks,
             get_tasks_by_category,
@@ -50,6 +53,10 @@ pub fn run() {
             calculate_task_progress,
             get_incomplete_subtasks,
             bulk_mark_subtasks_completed,
+            // Bulk commands
+            bulk_check_tasks_have_subtasks,
+            bulk_delete_tasks_with_subtasks,
+            bulk_delete_tasks_and_promote_subtasks,
             // Category commands
             create_category,
             get_categories,

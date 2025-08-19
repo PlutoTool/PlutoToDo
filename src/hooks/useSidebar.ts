@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface UseSidebarOptions {
   autoHideBreakpoint?: number; // Default breakpoint for auto-hide (pixels)
@@ -12,27 +12,36 @@ export const useSidebar = (options: UseSidebarOptions = {}) => {
   const [windowWidth, setWindowWidth] = useState<number>(
     typeof window !== 'undefined' ? window.innerWidth : 1024
   );
+  const previousWidthRef = useRef<number>(windowWidth);
 
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
+      const previousWidth = previousWidthRef.current;
+      
+      // Update refs and state
+      previousWidthRef.current = width;
       setWindowWidth(width);
       
-      // Auto-expand on large screens, auto-collapse on mobile only during resize
+      // Determine mobile state transitions
       const isMobile = width < autoHideBreakpoint;
+      const wasMobile = previousWidth < autoHideBreakpoint;
       
-      // If switching from mobile to desktop, expand
-      if (!isMobile && windowWidth < autoHideBreakpoint && !isExpanded) {
-        setIsExpanded(defaultExpanded);
-      }
       // If switching from desktop to mobile, collapse
-      else if (isMobile && windowWidth >= autoHideBreakpoint && isExpanded) {
+      if (isMobile && !wasMobile) {
+        console.log('Switching to mobile - collapsing sidebar');
         setIsExpanded(false);
+      }
+      // If switching from mobile to desktop, expand
+      else if (!isMobile && wasMobile) {
+        console.log('Switching to desktop - expanding sidebar');
+        setIsExpanded(defaultExpanded);
       }
     };
 
     // Initial setup
     const width = window.innerWidth;
+    previousWidthRef.current = width;
     setWindowWidth(width);
     
     // Set initial expanded state based on screen size
@@ -44,7 +53,7 @@ export const useSidebar = (options: UseSidebarOptions = {}) => {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []); // Remove dependencies to avoid infinite loops
+  }, [autoHideBreakpoint, defaultExpanded]); // Add proper dependencies
 
   const toggleSidebar = () => {
     setIsExpanded(!isExpanded);

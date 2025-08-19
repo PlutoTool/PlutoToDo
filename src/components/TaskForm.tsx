@@ -12,24 +12,31 @@ import { format } from 'date-fns';
 interface TaskFormProps {
   task?: Task;
   parentId?: string; // For creating subtasks
+  initialDueDate?: string; // ISO string for initial due date
   onSubmit?: () => void;
   onCancel?: () => void;
 }
 
-export const TaskForm: React.FC<TaskFormProps> = ({ task, parentId, onSubmit, onCancel }) => {
+export const TaskForm: React.FC<TaskFormProps> = ({ task, parentId, initialDueDate, onSubmit, onCancel }) => {
   const { createTask, updateTask } = useTaskStore();
   const { categories, loadCategories } = useCategoryStore();
   
   const [title, setTitle] = useState(task?.title || '');
   const [description, setDescription] = useState(task?.description || '');
   const [priority, setPriority] = useState<Priority>(task?.priority || Priority.Medium);
-  const [dueDate, setDueDate] = useState(
-    task?.due_date ? format(new Date(task.due_date), 'yyyy-MM-dd') : ''
-  );
+  const [dueDate, setDueDate] = useState(() => {
+    if (task?.due_date) {
+      return format(new Date(task.due_date), 'yyyy-MM-dd');
+    }
+    if (initialDueDate) {
+      return format(new Date(initialDueDate), 'yyyy-MM-dd');
+    }
+    return '';
+  });
   const [dueTime, setDueTime] = useState(
     task?.due_date ? format(new Date(task.due_date), 'HH:mm') : '23:59'
   );
-  const [noDueDate, setNoDueDate] = useState(!task?.due_date);
+  const [noDueDate, setNoDueDate] = useState(!task?.due_date && !initialDueDate);
   const [categoryId, setCategoryId] = useState(task?.category_id || '');
   const [tags, setTags] = useState<string[]>(task?.tags || []);
   const [newTag, setNewTag] = useState('');
@@ -59,10 +66,14 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, parentId, onSubmit, on
     try {
       // Convert date and time to ISO string if not "No Due Date"
       let dueDateString: string | undefined = undefined;
-      if (!noDueDate && dueDate) {
+      if (noDueDate) {
+        // Send empty string to indicate we want to clear the due date
+        dueDateString = '';
+      } else if (dueDate) {
         const dateTimeString = `${dueDate}T${dueTime}:00.000Z`;
         dueDateString = new Date(dateTimeString).toISOString();
       }
+      // If dueDateString is undefined, it means we don't want to change the due date
       
       const taskData = {
         title: title.trim(),
@@ -179,6 +190,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, parentId, onSubmit, on
                   value={dueDate}
                   onChange={(value) => setDueDate(value)}
                   placeholder="Select due date..."
+                  zIndex="z-[70]"
                 />
               </div>
               <div>

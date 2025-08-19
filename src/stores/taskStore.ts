@@ -4,6 +4,7 @@ import { invoke } from '@tauri-apps/api/core';
 
 interface TaskStore {
   tasks: Task[];
+  allTasks: Task[]; // Unfiltered tasks for count calculations
   loading: boolean;
   error: string | null;
   filter: TaskFilter;
@@ -13,6 +14,7 @@ interface TaskStore {
   
   // Actions
   setTasks: (tasks: Task[]) => void;
+  setAllTasks: (tasks: Task[]) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setFilter: (filter: TaskFilter) => void;
@@ -26,6 +28,9 @@ interface TaskStore {
   createTask: (task: CreateTaskRequest) => Promise<Task>;
   updateTask: (id: string, updates: UpdateTaskRequest) => Promise<Task>;
   deleteTask: (id: string) => Promise<void>;
+  deleteTaskWithSubtasks: (id: string) => Promise<void>;
+  deleteTaskAndPromoteSubtasks: (id: string) => Promise<void>;
+  checkTaskHasSubtasks: (id: string) => Promise<boolean>;
   toggleTaskCompletion: (id: string) => Promise<Task>;
   searchTasks: (query: string) => Promise<Task[]>;
   
@@ -42,11 +47,15 @@ interface TaskStore {
   
   // Bulk actions
   bulkDeleteTasks: (ids: string[]) => Promise<void>;
+  bulkCheckTasksHaveSubtasks: (ids: string[]) => Promise<string[]>;
+  bulkDeleteTasksWithSubtasks: (ids: string[]) => Promise<void>;
+  bulkDeleteTasksAndPromoteSubtasks: (ids: string[]) => Promise<void>;
   bulkMarkTasksCompleted: (ids: string[], completed: boolean) => Promise<void>;
 }
 
 export const useTaskStore = create<TaskStore>((set, get) => ({
   tasks: [],
+  allTasks: [],
   loading: false,
   error: null,
   filter: {},
@@ -58,6 +67,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     const sortedTasks = get().sortTasks(tasks);
     set({ tasks: sortedTasks });
   },
+  setAllTasks: (allTasks) => set({ allTasks }),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
   setFilter: (filter) => {
@@ -128,6 +138,10 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       set({ loading: true, error: null });
       const currentFilter = get().filter;
       
+      // Always load all tasks for count calculations
+      const allTasks = await invoke<Task[]>('get_tasks', { filter: null });
+      get().setAllTasks(allTasks);
+      
       // Only pass filter if it has meaningful values
       const hasFilter = currentFilter && (
         currentFilter.completed !== undefined ||
@@ -142,7 +156,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       
       const tasks = hasFilter 
         ? await invoke<Task[]>('get_tasks', { filter: currentFilter })
-        : await invoke<Task[]>('get_tasks', { filter: null });
+        : allTasks; // Use already loaded allTasks if no filter
         
       get().setTasks(tasks); // Use setTasks to apply sorting
       set({ loading: false });
@@ -168,9 +182,20 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       
       const newTask = await invoke<Task>('create_task', { request: requestObject });
       
+      // If this is a subtask (has parent_id), automatically expand the parent task
+      if (newTask.parent_id) {
+        set(state => {
+          const newExpanded = new Set(state.expandedTasks);
+          newExpanded.add(newTask.parent_id!);
+          return { expandedTasks: newExpanded };
+        });
+      }
+      
       // Add new task and re-sort
       const currentTasks = get().tasks;
+      const currentAllTasks = get().allTasks;
       get().setTasks([newTask, ...currentTasks]);
+      get().setAllTasks([newTask, ...currentAllTasks]);
       set({ loading: false });
       return newTask;
     } catch (error) {
@@ -182,22 +207,22 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   updateTask: async (id, updates) => {
     try {
       set({ loading: true, error: null });
+      console.log('TaskStore: updateTask called with:', { id, updates });
+      
       const updatedTask = await invoke<Task>('update_task', { 
         id, 
-        title: updates.title,
-        description: updates.description,
-        completed: updates.completed,
-        priority: updates.priority,
-        due_date: updates.due_date,
-        category_id: updates.category_id,
-        tags: updates.tags,
-        parent_id: updates.parent_id,
+        request: updates,
       });
+      
+      console.log('TaskStore: Received updated task from backend:', updatedTask);
       
       // Update task and re-sort
       const currentTasks = get().tasks;
+      const currentAllTasks = get().allTasks;
       const updatedTasks = currentTasks.map(task => task.id === id ? updatedTask : task);
+      const updatedAllTasks = currentAllTasks.map(task => task.id === id ? updatedTask : task);
       get().setTasks(updatedTasks);
+      get().setAllTasks(updatedAllTasks);
       set({ loading: false });
       return updatedTask;
     } catch (error) {
@@ -215,6 +240,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       console.log('Tauri command completed, updating local state...');
       set(state => ({
         tasks: state.tasks.filter(task => task.id !== id),
+        allTasks: state.allTasks.filter(task => task.id !== id),
         loading: false
       }));
       console.log('Local state updated');
@@ -225,11 +251,49 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
+  deleteTaskWithSubtasks: async (id) => {
+    try {
+      set({ loading: true, error: null });
+      await invoke('delete_task_with_subtasks', { id });
+      
+      // Reload all tasks to get the updated state
+      const allTasks = await invoke<Task[]>('get_tasks', {});
+      set({ tasks: allTasks, allTasks: allTasks, loading: false });
+    } catch (error) {
+      set({ error: error as string, loading: false });
+      throw error;
+    }
+  },
+
+  deleteTaskAndPromoteSubtasks: async (id) => {
+    try {
+      set({ loading: true, error: null });
+      await invoke('delete_task_and_promote_subtasks', { id });
+      
+      // Reload all tasks to get the updated state
+      const allTasks = await invoke<Task[]>('get_tasks', {});
+      set({ tasks: allTasks, allTasks: allTasks, loading: false });
+    } catch (error) {
+      set({ error: error as string, loading: false });
+      throw error;
+    }
+  },
+
+  checkTaskHasSubtasks: async (id) => {
+    try {
+      return await invoke<boolean>('check_task_has_subtasks', { id });
+    } catch (error) {
+      set({ error: error as string });
+      throw error;
+    }
+  },
+
   toggleTaskCompletion: async (id) => {
     try {
       const updatedTask = await invoke<Task>('toggle_task_completion', { id });
       set(state => ({
-        tasks: state.tasks.map(task => task.id === id ? updatedTask : task)
+        tasks: state.tasks.map(task => task.id === id ? updatedTask : task),
+        allTasks: state.allTasks.map(task => task.id === id ? updatedTask : task)
       }));
       return updatedTask;
     } catch (error) {
@@ -261,12 +325,90 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       // Update local state
       set(state => ({
         tasks: state.tasks.filter(task => !ids.includes(task.id)),
+        allTasks: state.allTasks.filter(task => !ids.includes(task.id)),
         loading: false
       }));
       
       console.log('Bulk delete completed');
     } catch (error) {
       console.error('Bulk delete failed:', error);
+      set({ error: error as string, loading: false });
+      throw error;
+    }
+  },
+
+  bulkCheckTasksHaveSubtasks: async (ids) => {
+    try {
+      console.log('Checking which tasks have subtasks:', ids);
+      const tasksWithSubtasks = await invoke<string[]>('bulk_check_tasks_have_subtasks', { ids });
+      console.log('Tasks with subtasks:', tasksWithSubtasks);
+      return tasksWithSubtasks;
+    } catch (error) {
+      console.error('Failed to check tasks for subtasks:', error);
+      throw error;
+    }
+  },
+
+  bulkDeleteTasksWithSubtasks: async (ids) => {
+    try {
+      console.log('Bulk deleting tasks with subtasks:', ids);
+      set({ loading: true, error: null });
+      
+      // Get all tasks that will be deleted (parents + their subtasks) before deletion
+      const state = get();
+      const tasksToDelete = new Set<string>();
+      
+      // Add the selected task IDs
+      ids.forEach(id => tasksToDelete.add(id));
+      
+      // For each selected task, recursively find all subtasks that will be deleted
+      const findAllSubtasks = (parentId: string) => {
+        const subtasks = state.tasks.filter(task => task.parent_id === parentId);
+        subtasks.forEach(subtask => {
+          tasksToDelete.add(subtask.id);
+          findAllSubtasks(subtask.id); // Recursively find nested subtasks
+        });
+      };
+      
+      ids.forEach(id => findAllSubtasks(id));
+      
+      await invoke('bulk_delete_tasks_with_subtasks', { ids });
+      
+      // Update local state - remove all tasks that were deleted (parents + subtasks)
+      set(state => ({
+        tasks: state.tasks.filter(task => !tasksToDelete.has(task.id)),
+        allTasks: state.allTasks.filter(task => !tasksToDelete.has(task.id)),
+        loading: false
+      }));
+      
+      console.log('Bulk delete with subtasks completed');
+    } catch (error) {
+      console.error('Bulk delete with subtasks failed:', error);
+      set({ error: error as string, loading: false });
+      throw error;
+    }
+  },
+
+  bulkDeleteTasksAndPromoteSubtasks: async (ids) => {
+    try {
+      console.log('Bulk deleting tasks and promoting subtasks:', ids);
+      set({ loading: true, error: null });
+      
+      await invoke('bulk_delete_tasks_and_promote_subtasks', { ids });
+      
+      // Reload tasks to get the updated state with promoted subtasks
+      const updatedTasks = await invoke<Task[]>('get_tasks', { filter: get().filter });
+      const allTasks = await invoke<Task[]>('get_tasks', { filter: null });
+      
+      set({
+        tasks: updatedTasks,
+        allTasks: allTasks,
+        loading: false
+      });
+      
+      console.log('Bulk delete and promote subtasks completed');
+    } catch (error) {
+      console.error('Bulk delete and promote subtasks failed:', error);
       set({ error: error as string, loading: false });
       throw error;
     }
@@ -300,6 +442,10 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       // Update local state
       set(state => ({
         tasks: state.tasks.map(task => {
+          const updated = updatedTasks.find(ut => ut.id === task.id);
+          return updated || task;
+        }),
+        allTasks: state.allTasks.map(task => {
           const updated = updatedTasks.find(ut => ut.id === task.id);
           return updated || task;
         }),
@@ -374,6 +520,10 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         tasks: state.tasks.map(task => {
           const updated = updatedTasks.find(ut => ut.id === task.id);
           return updated || task;
+        }),
+        allTasks: state.allTasks.map(task => {
+          const updated = updatedTasks.find(ut => ut.id === task.id);
+          return updated || task;
         })
       }));
       
@@ -396,7 +546,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       
       // Reload all tasks to get the updated state
       const allTasks = await invoke<Task[]>('get_tasks', {});
-      set({ tasks: allTasks });
+      set({ tasks: allTasks, allTasks: allTasks });
       
       return updatedTask;
     } catch (error) {

@@ -1,11 +1,24 @@
 # Pluto: To-do
 
-A modern, elegant, and feature-rich cross-platform todo application built with Rust Tauri 2 and TypeScript React. Part of the PlutoTool suite of productivity applications.
+A modern, elegant, and### 🎯 Core Task Management
+- **Create, Edit, Delete Tasks** - Full CRUD operations with intuitive interface
+- **Task Detail Modal** - Comprehensive task detail view with inline editing and metadata display
+- **Task Completion** - Toggle completion status with visual feedback and one-click actions
+- **Smart Task Deletion** - Intelligent deletion options for tasks with subtasks (delete all or promote subtasks)
+- **Bulk Delete Management** - Advanced bulk deletion with smart handling of parent-child relationships
+- **Subtasks Support** - Organize complex tasks with nested subtasks (2 levels deep)
+- **Hierarchical Task Management** - Expandable/collapsible tree view for task organization
+- **Task Progress Tracking** - Visual progress indicators showing subtask completion percentages
+- **Smart Task Completion** - Intelligent completion handling for tasks with incomplete subtasks
+- **Priority Levels** - High, Medium, Low priority with color coding and visual indicators
+- **Due Dates** - Calendar picker with overdue indicators and smart reminders
+- **Rich Descriptions** - Detailed task descriptions with markdown support
+- **Bulk Operations** - Select multiple tasks for bulk delete, completion, or updatesch cross-platform todo application built with Rust Tauri 2 and TypeScript React. Part of the PlutoTool suite of productivity applications.
 
 ![Pluto: To-do](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)
 ![Tech Stack](https://img.shields.io/badge/Tech-Tauri%202%20%7C%20React%20%7C%20TypeScript-green)
-![License](https://img.shields.io/badge/License-MIT-yellow)
-![Version](https://img.shields.io/badge/Version-1.1.0-orange)
+![License](https://img.shields.io/badge/License-LGPL--3.0-yellow)
+![Version](https://img.shields.io/badge/Version-1.2.0-orange)
 
 ## 🌟 About PlutoTool
 
@@ -19,7 +32,23 @@ You can access information about PlutoTool directly from the application by clic
 
 ## 🆕 Recent Updates
 
-### Latest Features (v1.1.0)
+### Latest Features (v1.2.0)
+- **📅 Modern Calendar View** - Beautiful calendar interface with month and day views for visualizing due dates
+- **🎯 Task Day View Modal** - Detailed daily task management with completion tracking and quick actions
+- **📊 Month Summary Dashboard** - Comprehensive monthly overview with task statistics and progress insights
+- **🌙 Enhanced Dark Mode** - Improved dark mode consistency across all calendar components and modals
+- **🎨 UI/UX Improvements** - Refined interface elements, better spacing, and improved visual feedback
+- **📱 Responsive Calendar Design** - Optimized calendar experience for desktop, tablet, and mobile devices
+- **🗓️ Smart Date Navigation** - Intuitive navigation between months, weeks, and days with keyboard shortcuts
+- **⚡ Performance Optimizations** - Faster calendar rendering and smoother transitions
+- **🔍 Calendar Task Filtering** - Filter calendar view by categories, priorities, and completion status
+- **📋 Quick Task Creation from Calendar** - Create tasks directly from calendar dates with pre-filled due dates
+
+### Previous Features (v1.1.0)
+- **📋 Task Detail Modal** - Comprehensive task detail view with inline editing, subtask management, and metadata display
+- **🗑️ Smart Delete Options** - Intelligent deletion modals for tasks with subtasks, offering promote or delete options
+- **📋 Bulk Delete Management** - Advanced bulk deletion with smart handling of tasks containing subtasks
+- **🌙 Dark Mode Improvements** - Enhanced dark mode support with proper styling for all UI components
 - **🔄 Automatic Update Checker** - Check for new releases directly from the sidebar
 - **ℹ️ About Section** - New About modal with PlutoTool information and website link
 - **✨ Advanced Sorting System** - Sort tasks by multiple fields with ascending/descending options
@@ -54,18 +83,34 @@ You can access information about PlutoTool directly from the application by clic
 - **Flexible Sorting** - Sort by name, due date, creation date, update date, priority, or completion status
 - **Sort Direction Toggle** - Ascending/descending sorting with visual indicators
 
+### 📅 Calendar & Time Management
+- **Modern Calendar View** - Beautiful month view calendar with intuitive date navigation and task visualization
+- **Daily Task Management** - Dedicated day view modal showing all tasks for a specific date with quick actions
+- **Monthly Overview Dashboard** - Comprehensive month summary with task statistics, completion rates, and progress insights
+- **Due Date Visualization** - Visual representation of tasks across calendar dates with priority color coding
+- **Smart Date Navigation** - Seamless navigation between months, weeks, and days with keyboard shortcuts
+- **Calendar Task Creation** - Quick task creation directly from calendar dates with auto-populated due dates
+- **Task Density Indicators** - Visual cues showing task load per day with color-coded intensity
+- **Calendar Filtering** - Filter calendar view by categories, priorities, completion status, and tags
+- **Responsive Calendar Design** - Optimized calendar experience across desktop, tablet, and mobile devices
+- **Dark Mode Calendar** - Fully styled calendar components with consistent dark mode theming
+
 ### 🎨 User Experience
 - **Space-themed Design** - Cosmic color palette with deep blues and purples
-- **Dark Mode Support** - Automatic system preference detection with manual toggle
+- **Enhanced Dark Mode** - Comprehensive dark mode support with proper styling for all components including calendar
+- **Modern Calendar Interface** - Beautiful month view calendar with intuitive navigation and task visualization
+- **Daily Task Focus** - Dedicated day view modal for focused daily task management
+- **Monthly Analytics** - Comprehensive statistics dashboard with productivity insights and trends
+- **Task Detail Modal** - Rich task detail view with inline editing, subtask navigation, and progress tracking
 - **Update Notifications** - Automatic update checking with detailed release notes and one-click downloads
 - **About Modal** - Accessible information about the app and PlutoTool with direct website link
-- **Responsive Design** - Optimized for desktop, tablet, and mobile
+- **Responsive Design** - Optimized for desktop, tablet, and mobile with adaptive calendar layouts
 - **Mobile-Optimized Bulk Actions** - Floating action buttons for desktop, bottom sheets for mobile
 - **Expandable Task Hierarchy** - Collapsible tree view with visual depth indicators
 - **Subtask Completion Modal** - Smart dialog for handling incomplete subtasks
 - **Real-time Progress Indicators** - Live updating progress bars for parent tasks
-- **Smooth Animations** - Micro-interactions and transitions for better UX
-- **Keyboard Shortcuts** - Power user features for efficient navigation
+- **Smooth Animations** - Micro-interactions and transitions for better UX including calendar transitions
+- **Enhanced Keyboard Shortcuts** - Power user features for efficient navigation including calendar controls
 
 ### ⚡ Performance & Technical
 - **Cross-Platform** - Windows, macOS, Linux support with native installers
@@ -189,6 +234,12 @@ pluto-todo/
 │   │   ├── SubtaskItem.tsx # Enhanced hierarchical task display
 │   │   ├── TaskList.tsx    # Task list container with bulk operations
 │   │   ├── TaskForm.tsx    # Task creation/editing form
+│   │   ├── TaskDetailModal.tsx # Comprehensive task detail modal with editing
+│   │   ├── CalendarView.tsx # Modern calendar interface with month view
+│   │   ├── DayViewModal.tsx # Daily task management modal with quick actions
+│   │   ├── MonthSummary.tsx # Monthly overview dashboard with statistics
+│   │   ├── DeleteTaskOptionsModal.tsx # Smart deletion options for tasks with subtasks
+│   │   ├── BulkDeleteOptionsModal.tsx # Bulk deletion management modal
 │   │   ├── SortDropdown.tsx # Advanced sorting controls
 │   │   ├── SubtaskCompletionModal.tsx # Smart completion dialog
 │   │   ├── AboutModal.tsx  # Application information modal
@@ -198,11 +249,12 @@ pluto-todo/
 │   │   └── categoryStore.ts # Category-related state
 │   ├── hooks/              # Custom React hooks
 │   │   ├── useSidebar.ts   # Sidebar state management
-│   │   └── useUpdateChecker.ts # Update checking functionality
+│   │   ├── useUpdateChecker.ts # Update checking functionality
+│   │   └── useKeyboardShortcuts.ts # Keyboard navigation and shortcuts
 │   ├── utils/              # Utility functions
 │   │   ├── taskHierarchy.ts # Task relationship and progress utilities
 │   │   ├── updateChecker.ts # GitHub API integration for updates
-│   │   ├── dateUtils.ts    # Date formatting and manipulation
+│   │   ├── dateUtils.ts    # Date formatting, manipulation, and calendar utilities
 │   │   ├── priorityUtils.ts # Priority color and display utilities
 │   │   └── cn.ts          # Tailwind class name utilities
 │   ├── types/              # TypeScript type definitions
@@ -254,19 +306,40 @@ pluto-todo/
 - `Cmd/Ctrl + N` - Create new task
 - `Cmd/Ctrl + F` - Focus search bar
 - `Cmd/Ctrl + ,` - Open preferences/settings
+- `Cmd/Ctrl + K` - Open calendar view
 - `Escape` - Close modals/cancel actions
 - `Tab` - Navigate between form fields
 - `Shift + Tab` - Navigate backwards between form fields
 
+### Calendar Navigation
+- `Arrow Keys` - Navigate between calendar dates
+- `Cmd/Ctrl + Left/Right` - Navigate between months
+- `Enter` - Open day view for selected date
+- `Space` - Toggle between month and list view
+- `Home` - Go to current date/today
+- `End` - Go to end of current month
+- `Page Up/Down` - Navigate between months quickly
+
 ### Task Management
 - `Space` - Toggle task completion (when task selected)
 - `Cmd/Ctrl + E` - Edit selected task
-- `Cmd/Ctrl + D` - Delete selected task
+- `Cmd/Ctrl + D` - Delete selected task (shows smart deletion options for tasks with subtasks)
+- `Cmd/Ctrl + Shift + D` - Bulk delete selected tasks (shows bulk deletion options modal)
+- `Cmd/Ctrl + I` - Open task detail modal (when task selected)
 - `Cmd/Ctrl + A` - Select all tasks
 - `Cmd/Ctrl + Shift + A` - Deselect all tasks
 - `Enter` - Confirm/submit forms
 - `Click Chevron` - Expand/collapse subtasks
 - `Shift + Click` - Bulk select range of tasks
+
+### Task Detail Modal
+- `Escape` - Close modal/cancel editing
+- `Cmd/Ctrl + E` - Edit current task
+- `Cmd/Ctrl + S` - Save changes (when editing)
+- `Cmd/Ctrl + Delete` - Delete current task
+- `Cmd/Ctrl + N` - Add new subtask
+- `Tab` - Navigate between subtasks
+- `Enter` - Navigate to selected subtask
 
 ### Sorting & Filtering
 - `Cmd/Ctrl + 1-6` - Quick sort by field (Name, Due Date, Created, Updated, Priority, Status)
@@ -287,6 +360,89 @@ pluto-todo/
 - **Font Weights**: 300 (Light), 400 (Regular), 500 (Medium), 600 (Semibold), 700 (Bold)
 
 ## 🆕 New Features & Functions
+
+### � Modern Calendar System (v1.2.0)
+
+#### CalendarView Component
+The new calendar interface provides a comprehensive date-based task management experience:
+- **Month View Calendar** - Beautiful grid layout showing all days of the month with task indicators
+- **Task Density Visualization** - Visual indicators showing task load per day with color-coded intensity
+- **Due Date Highlighting** - Clear visual distinction between overdue, due today, and upcoming tasks
+- **Quick Task Creation** - Click any calendar date to create tasks with pre-populated due dates
+- **Category Color Coding** - Tasks displayed with their category colors for easy identification
+- **Priority Indicators** - Visual priority markers integrated into calendar date cells
+- **Responsive Grid Layout** - Adaptive calendar that works seamlessly across all device sizes
+- **Dark Mode Integration** - Consistent theming with the rest of the application
+
+#### DayViewModal Component
+Dedicated daily task management interface for focused productivity:
+- **Daily Task Overview** - Complete list of tasks for a specific date with quick access to details
+- **Task Completion Tracking** - Toggle task completion directly from the day view
+- **Quick Actions** - Edit, delete, and manage tasks without leaving the day context
+- **Progress Statistics** - Daily completion rates and productivity insights
+- **Task Creation Shortcuts** - Add new tasks for the selected date with minimal clicks
+- **Category Filtering** - Filter day tasks by categories for better organization
+- **Time-based Organization** - Smart sorting of tasks by priority and due time
+
+#### MonthSummary Component
+Comprehensive monthly analytics and overview dashboard:
+- **Task Statistics** - Total tasks, completed tasks, and completion percentages for the month
+- **Progress Visualization** - Interactive charts and graphs showing productivity trends
+- **Category Breakdown** - Task distribution across different categories with visual representations
+- **Daily Productivity Heat Map** - Visual calendar showing productivity levels for each day
+- **Monthly Goals Tracking** - Track progress towards monthly task completion goals
+- **Comparison Metrics** - Compare current month performance with previous months
+- **Export Capabilities** - Export monthly reports and statistics for external analysis
+
+#### Enhanced Calendar Features
+```typescript
+// Calendar navigation and state management
+currentDate: Date
+selectedDate: Date | null
+calendarView: 'month' | 'week' | 'day'
+navigateToDate(date: Date): void
+navigateToMonth(month: number, year: number): void
+navigateToToday(): void
+
+// Task visualization utilities
+getTasksForDate(date: Date): Task[]
+getTaskCountForDate(date: Date): number
+getTaskDensityLevel(date: Date): 'low' | 'medium' | 'high'
+isDateOverdue(date: Date): boolean
+getMonthlyTaskStatistics(month: number, year: number): MonthlyStats
+
+// Calendar integration with task management
+createTaskForDate(date: Date): void
+filterCalendarByCategory(categoryId: string): void
+filterCalendarByPriority(priority: Priority): void
+```
+
+### �📋 Task Detail Modal System
+
+#### TaskDetailModal Component
+The new `TaskDetailModal` provides a comprehensive task management interface:
+- **Complete Task Overview** - View all task metadata in a single, organized interface
+- **Inline Editing** - Edit tasks without leaving the detail view
+- **Subtask Management** - Add, view, and navigate subtasks with progress tracking
+- **Status Controls** - Quick completion toggle with visual feedback
+- **Navigation System** - Breadcrumb-style navigation between parent and child tasks
+- **Dark Mode Optimized** - Fully styled for both light and dark themes
+
+#### Enhanced Task Interaction
+```typescript
+// New task detail functionality
+openTaskDetail(taskId: string): void
+navigateToSubtask(subtaskId: string): void
+navigateToParent(parentId: string): void
+toggleTaskFromDetail(taskId: string): Promise<void>
+editTaskInline(task: Task): void
+deleteTaskFromDetail(taskId: string): Promise<void>
+
+// Modal state management
+showTaskDetail: boolean
+currentDetailTask: Task | null
+taskDetailHistory: string[]  // For navigation breadcrumbs
+```
 
 ### 🌳 Enhanced Subtask System
 
@@ -336,7 +492,85 @@ bulkDeleteTasks(taskIds: string[]): Promise<void>
 bulkMarkTasksCompleted(taskIds: string[], completed: boolean): Promise<void>
 ```
 
-### 🔄 Automatic Update System
+### � Task Detail Modal
+
+#### TaskDetailModal Component
+A comprehensive modal for viewing and managing task details with advanced features:
+- **Rich Task Information** - Complete task metadata including creation/update timestamps, category, priority, and tags
+- **Inline Editing** - Edit task details directly within the modal without losing context
+- **Status Management** - Toggle task completion with visual feedback and confirmation
+- **Subtask Navigation** - Navigate between parent tasks and subtasks with breadcrumb-style navigation
+- **Progress Visualization** - Real-time progress bars and completion statistics for subtasks
+- **Quick Actions** - Edit, delete, and add subtasks with convenient action buttons
+- **Dark Mode Support** - Fully optimized for both light and dark themes
+- **Responsive Layout** - Adaptive design for desktop, tablet, and mobile viewports
+
+#### Key Features
+```typescript
+// Enhanced task detail viewing with metadata
+- Task title with completion status and priority indicators
+- Rich description display with formatted text
+- Due date with overdue warnings and calendar integration
+- Category assignment with color-coded visual indicators
+- Tag system with searchable and filterable tags
+- Creation and modification timestamps
+
+// Advanced subtask management
+- Hierarchical navigation between parent and child tasks
+- Progress tracking with visual completion percentages
+- Quick subtask creation directly from the detail view
+- Clickable subtask navigation for deep task exploration
+
+// Seamless editing workflow
+- In-place editing without losing modal context
+- Form validation with real-time feedback
+- Cancel/save functionality with state preservation
+```
+
+### 🗑️ Smart Task Deletion System
+
+#### DeleteTaskOptionsModal Component
+An intelligent modal that appears when deleting tasks with subtasks, providing smart deletion options:
+- **Subtask Detection** - Automatically detects when a task has subtasks and shows appropriate options
+- **Delete All Option** - Permanently delete the parent task and all its subtasks with clear warning
+- **Promote Subtasks Option** - Delete only the parent task while promoting subtasks up one hierarchy level
+- **Visual Warning System** - Clear visual indicators with task counts and impact descriptions
+- **User-Friendly Interface** - Easy-to-understand options with descriptive text and icons
+
+#### BulkDeleteOptionsModal Component
+Advanced bulk deletion management for multiple selected tasks:
+- **Smart Analysis** - Analyzes selected tasks to identify which ones have subtasks
+- **Detailed Statistics** - Shows breakdown of tasks with and without subtasks
+- **Bulk Delete Options** - Choose to delete all tasks and subtasks or promote subtasks
+- **Impact Preview** - Clear visualization of what will be deleted vs. promoted
+- **Confirmation Safety** - Multiple confirmation steps to prevent accidental data loss
+
+#### Key Features
+```typescript
+// Smart deletion logic for individual tasks
+interface DeleteTaskOptionsModalProps {
+  taskTitle: string;           // Display task name for confirmation
+  subtaskCount: number;        // Show number of affected subtasks
+  onDeleteWithSubtasks: () => void;      // Delete parent and all children
+  onDeleteAndPromoteSubtasks: () => void; // Delete parent, promote children
+}
+
+// Bulk deletion with hierarchy awareness
+interface BulkDeleteOptionsModalProps {
+  totalTasks: number;          // Total number of selected tasks
+  tasksWithSubtasks: number;   // Count of parent tasks with children
+  onDeleteAll: () => void;     // Delete all selected tasks and their subtasks
+  onPromoteSubtasks: () => void; // Delete selected tasks but promote their subtasks
+}
+
+// Enhanced deletion workflow
+- Visual warnings with task impact analysis
+- Clear descriptions of each deletion option
+- Hierarchical promotion logic for maintaining task organization
+- Undo-safe operations with clear confirmation dialogs
+```
+
+### �🔄 Automatic Update System
 
 #### Update Checker Utilities in `updateChecker.ts`
 ```typescript
@@ -372,10 +606,17 @@ Enhanced sorting with multiple criteria:
 - **Floating Action Menu** - Desktop: Bottom-right floating menu, Mobile: Bottom sheet
 - **Bulk Actions Available**:
   - Mark multiple tasks as done/undone
-  - Delete multiple tasks at once
+  - Delete multiple tasks at once with smart hierarchy handling
   - Clear all selections
-- **Confirmation Dialogs** - Smart confirmation with task counts
+- **Smart Deletion Modals** - Intelligent deletion options for tasks with subtasks
+- **Confirmation Dialogs** - Smart confirmation with task counts and hierarchy impact analysis
 - **Responsive UI** - Adaptive interface for different screen sizes
+
+#### Enhanced Deletion Features
+- **Individual Task Deletion** - Smart options when deleting tasks with subtasks (delete all vs. promote)
+- **Bulk Deletion Management** - Advanced handling of multiple tasks with different hierarchy structures
+- **Subtask Promotion** - Option to promote subtasks when deleting parent tasks
+- **Visual Impact Analysis** - Clear preview of what will be deleted vs. promoted before confirmation
 
 ## 🔧 Development
 
@@ -466,14 +707,22 @@ For major changes, please open an issue first to discuss what you would like to 
 
 ## 🗓️ Roadmap
 
-### Upcoming Features (v1.1.0)
-- **📱 Mobile Responsiveness** - Enhanced touch interface and mobile optimization
+### Upcoming Features (v1.3.0)
+- **📱 Enhanced Mobile Experience** - Native mobile app features and touch gestures
 - **🔄 Data Sync** - Optional cloud synchronization across devices
 - **📋 Task Templates** - Reusable task templates for common workflows
-- **📈 Analytics Dashboard** - Productivity insights and completion statistics
-- **🎨 Theme Customization** - Custom color themes and layout options
-- **🔍 Advanced Search** - Filter by date ranges, tags, and task hierarchy
-- **⚡ Keyboard Navigation** - Full keyboard support for power users
+- **📈 Advanced Analytics** - Enhanced productivity insights and detailed reporting
+- **🎨 Theme Customization** - Custom color themes and layout personalization
+- **🔍 Enhanced Search** - Advanced search with filters, operators, and saved searches
+- **⚡ Advanced Keyboard Navigation** - Enhanced keyboard shortcuts and accessibility
+- **🔔 Smart Notifications** - Context-aware reminders and deadline alerts
+
+### Recently Completed (v1.2.0)
+- **✅ Modern Calendar View** - Month view calendar with task visualization
+- **✅ Daily Task Management** - Dedicated day view modal for focused productivity
+- **✅ Monthly Analytics Dashboard** - Comprehensive statistics and progress tracking
+- **✅ Calendar Task Creation** - Quick task creation from calendar dates
+- **✅ Enhanced UI/UX** - Improved interface elements and visual feedback
 
 ### Future Enhancements (v1.2.0+)
 - **🔗 Integrations** - Calendar sync (Google Calendar, Outlook)
@@ -492,7 +741,7 @@ For major changes, please open an issue first to discuss what you would like to 
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU Lesser General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
