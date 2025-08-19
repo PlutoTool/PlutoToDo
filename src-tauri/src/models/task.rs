@@ -65,8 +65,8 @@ pub struct UpdateTaskRequest {
     pub title: Option<String>,
     pub description: Option<String>,
     pub completed: Option<bool>,
-    pub priority: Option<Priority>,
-    pub due_date: Option<NaiveDateTime>,
+    pub priority: Option<String>, // String for easier parsing
+    pub due_date: Option<String>, // String for easier parsing, empty string means clear
     pub category_id: Option<String>,
     pub tags: Option<Vec<String>>,
     pub parent_id: Option<String>,
@@ -173,11 +173,27 @@ impl Task {
         if let Some(completed) = request.completed {
             self.completed = completed;
         }
-        if let Some(priority) = request.priority {
-            self.priority = priority;
+        if let Some(priority_str) = request.priority {
+            self.priority = Priority::from_string(&priority_str);
         }
-        if let Some(due_date) = request.due_date {
-            self.due_date = Some(due_date);
+        // Handle due_date parsing
+        if let Some(due_date_str) = request.due_date {
+            if due_date_str.is_empty() {
+                // Empty string means clear the due date
+                self.due_date = None;
+                println!("Clearing due_date");
+            } else {
+                // Parse the date string
+                use chrono::DateTime;
+                self.due_date = DateTime::parse_from_rfc3339(&due_date_str)
+                    .or_else(|_| {
+                        // Try parsing as date only (YYYY-MM-DD)
+                        let datetime_str = format!("{}T00:00:00Z", due_date_str);
+                        DateTime::parse_from_rfc3339(&datetime_str)
+                    })
+                    .ok()
+                    .map(|dt| dt.naive_utc());
+            }
         }
         if let Some(category_id) = request.category_id {
             self.category_id = Some(category_id);

@@ -66,10 +66,14 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, parentId, initialDueDa
     try {
       // Convert date and time to ISO string if not "No Due Date"
       let dueDateString: string | undefined = undefined;
-      if (!noDueDate && dueDate) {
+      if (noDueDate) {
+        // Send empty string to indicate we want to clear the due date
+        dueDateString = '';
+      } else if (dueDate) {
         const dateTimeString = `${dueDate}T${dueTime}:00.000Z`;
         dueDateString = new Date(dateTimeString).toISOString();
       }
+      // If dueDateString is undefined, it means we don't want to change the due date
       
       const taskData = {
         title: title.trim(),
@@ -186,6 +190,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, parentId, initialDueDa
                   value={dueDate}
                   onChange={(value) => setDueDate(value)}
                   placeholder="Select due date..."
+                  zIndex="z-[70]"
                 />
               </div>
               <div>

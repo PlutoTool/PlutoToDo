@@ -18,7 +18,7 @@ A modern, elegant, and### 🎯 Core Task Management
 ![Pluto: To-do](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)
 ![Tech Stack](https://img.shields.io/badge/Tech-Tauri%202%20%7C%20React%20%7C%20TypeScript-green)
 ![License](https://img.shields.io/badge/License-LGPL--3.0-yellow)
-![Version](https://img.shields.io/badge/Version-1.1.0-orange)
+![Version](https://img.shields.io/badge/Version-1.2.0-orange)
 
 ## 🌟 About PlutoTool
 
@@ -32,12 +32,24 @@ You can access information about PlutoTool directly from the application by clic
 
 ## 🆕 Recent Updates
 
-### Latest Features (v1.1.0)
-- **� Task Detail Modal** - Comprehensive task detail view with inline editing, subtask management, and metadata display
+### Latest Features (v1.2.0)
+- **📅 Modern Calendar View** - Beautiful calendar interface with month and day views for visualizing due dates
+- **🎯 Task Day View Modal** - Detailed daily task management with completion tracking and quick actions
+- **📊 Month Summary Dashboard** - Comprehensive monthly overview with task statistics and progress insights
+- **🌙 Enhanced Dark Mode** - Improved dark mode consistency across all calendar components and modals
+- **🎨 UI/UX Improvements** - Refined interface elements, better spacing, and improved visual feedback
+- **📱 Responsive Calendar Design** - Optimized calendar experience for desktop, tablet, and mobile devices
+- **🗓️ Smart Date Navigation** - Intuitive navigation between months, weeks, and days with keyboard shortcuts
+- **⚡ Performance Optimizations** - Faster calendar rendering and smoother transitions
+- **🔍 Calendar Task Filtering** - Filter calendar view by categories, priorities, and completion status
+- **📋 Quick Task Creation from Calendar** - Create tasks directly from calendar dates with pre-filled due dates
+
+### Previous Features (v1.1.0)
+- **📋 Task Detail Modal** - Comprehensive task detail view with inline editing, subtask management, and metadata display
 - **🗑️ Smart Delete Options** - Intelligent deletion modals for tasks with subtasks, offering promote or delete options
 - **📋 Bulk Delete Management** - Advanced bulk deletion with smart handling of tasks containing subtasks
 - **🌙 Dark Mode Improvements** - Enhanced dark mode support with proper styling for all UI components
-- **�🔄 Automatic Update Checker** - Check for new releases directly from the sidebar
+- **🔄 Automatic Update Checker** - Check for new releases directly from the sidebar
 - **ℹ️ About Section** - New About modal with PlutoTool information and website link
 - **✨ Advanced Sorting System** - Sort tasks by multiple fields with ascending/descending options
 - **🔄 Bulk Operations** - Select and manage multiple tasks simultaneously
@@ -71,19 +83,34 @@ You can access information about PlutoTool directly from the application by clic
 - **Flexible Sorting** - Sort by name, due date, creation date, update date, priority, or completion status
 - **Sort Direction Toggle** - Ascending/descending sorting with visual indicators
 
+### 📅 Calendar & Time Management
+- **Modern Calendar View** - Beautiful month view calendar with intuitive date navigation and task visualization
+- **Daily Task Management** - Dedicated day view modal showing all tasks for a specific date with quick actions
+- **Monthly Overview Dashboard** - Comprehensive month summary with task statistics, completion rates, and progress insights
+- **Due Date Visualization** - Visual representation of tasks across calendar dates with priority color coding
+- **Smart Date Navigation** - Seamless navigation between months, weeks, and days with keyboard shortcuts
+- **Calendar Task Creation** - Quick task creation directly from calendar dates with auto-populated due dates
+- **Task Density Indicators** - Visual cues showing task load per day with color-coded intensity
+- **Calendar Filtering** - Filter calendar view by categories, priorities, completion status, and tags
+- **Responsive Calendar Design** - Optimized calendar experience across desktop, tablet, and mobile devices
+- **Dark Mode Calendar** - Fully styled calendar components with consistent dark mode theming
+
 ### 🎨 User Experience
 - **Space-themed Design** - Cosmic color palette with deep blues and purples
-- **Enhanced Dark Mode** - Comprehensive dark mode support with proper styling for all components
+- **Enhanced Dark Mode** - Comprehensive dark mode support with proper styling for all components including calendar
+- **Modern Calendar Interface** - Beautiful month view calendar with intuitive navigation and task visualization
+- **Daily Task Focus** - Dedicated day view modal for focused daily task management
+- **Monthly Analytics** - Comprehensive statistics dashboard with productivity insights and trends
 - **Task Detail Modal** - Rich task detail view with inline editing, subtask navigation, and progress tracking
 - **Update Notifications** - Automatic update checking with detailed release notes and one-click downloads
 - **About Modal** - Accessible information about the app and PlutoTool with direct website link
-- **Responsive Design** - Optimized for desktop, tablet, and mobile
+- **Responsive Design** - Optimized for desktop, tablet, and mobile with adaptive calendar layouts
 - **Mobile-Optimized Bulk Actions** - Floating action buttons for desktop, bottom sheets for mobile
 - **Expandable Task Hierarchy** - Collapsible tree view with visual depth indicators
 - **Subtask Completion Modal** - Smart dialog for handling incomplete subtasks
 - **Real-time Progress Indicators** - Live updating progress bars for parent tasks
-- **Smooth Animations** - Micro-interactions and transitions for better UX
-- **Keyboard Shortcuts** - Power user features for efficient navigation
+- **Smooth Animations** - Micro-interactions and transitions for better UX including calendar transitions
+- **Enhanced Keyboard Shortcuts** - Power user features for efficient navigation including calendar controls
 
 ### ⚡ Performance & Technical
 - **Cross-Platform** - Windows, macOS, Linux support with native installers
@@ -208,6 +235,9 @@ pluto-todo/
 │   │   ├── TaskList.tsx    # Task list container with bulk operations
 │   │   ├── TaskForm.tsx    # Task creation/editing form
 │   │   ├── TaskDetailModal.tsx # Comprehensive task detail modal with editing
+│   │   ├── CalendarView.tsx # Modern calendar interface with month view
+│   │   ├── DayViewModal.tsx # Daily task management modal with quick actions
+│   │   ├── MonthSummary.tsx # Monthly overview dashboard with statistics
 │   │   ├── DeleteTaskOptionsModal.tsx # Smart deletion options for tasks with subtasks
 │   │   ├── BulkDeleteOptionsModal.tsx # Bulk deletion management modal
 │   │   ├── SortDropdown.tsx # Advanced sorting controls
@@ -219,11 +249,12 @@ pluto-todo/
 │   │   └── categoryStore.ts # Category-related state
 │   ├── hooks/              # Custom React hooks
 │   │   ├── useSidebar.ts   # Sidebar state management
-│   │   └── useUpdateChecker.ts # Update checking functionality
+│   │   ├── useUpdateChecker.ts # Update checking functionality
+│   │   └── useKeyboardShortcuts.ts # Keyboard navigation and shortcuts
 │   ├── utils/              # Utility functions
 │   │   ├── taskHierarchy.ts # Task relationship and progress utilities
 │   │   ├── updateChecker.ts # GitHub API integration for updates
-│   │   ├── dateUtils.ts    # Date formatting and manipulation
+│   │   ├── dateUtils.ts    # Date formatting, manipulation, and calendar utilities
 │   │   ├── priorityUtils.ts # Priority color and display utilities
 │   │   └── cn.ts          # Tailwind class name utilities
 │   ├── types/              # TypeScript type definitions
@@ -275,9 +306,19 @@ pluto-todo/
 - `Cmd/Ctrl + N` - Create new task
 - `Cmd/Ctrl + F` - Focus search bar
 - `Cmd/Ctrl + ,` - Open preferences/settings
+- `Cmd/Ctrl + K` - Open calendar view
 - `Escape` - Close modals/cancel actions
 - `Tab` - Navigate between form fields
 - `Shift + Tab` - Navigate backwards between form fields
+
+### Calendar Navigation
+- `Arrow Keys` - Navigate between calendar dates
+- `Cmd/Ctrl + Left/Right` - Navigate between months
+- `Enter` - Open day view for selected date
+- `Space` - Toggle between month and list view
+- `Home` - Go to current date/today
+- `End` - Go to end of current month
+- `Page Up/Down` - Navigate between months quickly
 
 ### Task Management
 - `Space` - Toggle task completion (when task selected)
@@ -320,7 +361,63 @@ pluto-todo/
 
 ## 🆕 New Features & Functions
 
-### 📋 Task Detail Modal System
+### � Modern Calendar System (v1.2.0)
+
+#### CalendarView Component
+The new calendar interface provides a comprehensive date-based task management experience:
+- **Month View Calendar** - Beautiful grid layout showing all days of the month with task indicators
+- **Task Density Visualization** - Visual indicators showing task load per day with color-coded intensity
+- **Due Date Highlighting** - Clear visual distinction between overdue, due today, and upcoming tasks
+- **Quick Task Creation** - Click any calendar date to create tasks with pre-populated due dates
+- **Category Color Coding** - Tasks displayed with their category colors for easy identification
+- **Priority Indicators** - Visual priority markers integrated into calendar date cells
+- **Responsive Grid Layout** - Adaptive calendar that works seamlessly across all device sizes
+- **Dark Mode Integration** - Consistent theming with the rest of the application
+
+#### DayViewModal Component
+Dedicated daily task management interface for focused productivity:
+- **Daily Task Overview** - Complete list of tasks for a specific date with quick access to details
+- **Task Completion Tracking** - Toggle task completion directly from the day view
+- **Quick Actions** - Edit, delete, and manage tasks without leaving the day context
+- **Progress Statistics** - Daily completion rates and productivity insights
+- **Task Creation Shortcuts** - Add new tasks for the selected date with minimal clicks
+- **Category Filtering** - Filter day tasks by categories for better organization
+- **Time-based Organization** - Smart sorting of tasks by priority and due time
+
+#### MonthSummary Component
+Comprehensive monthly analytics and overview dashboard:
+- **Task Statistics** - Total tasks, completed tasks, and completion percentages for the month
+- **Progress Visualization** - Interactive charts and graphs showing productivity trends
+- **Category Breakdown** - Task distribution across different categories with visual representations
+- **Daily Productivity Heat Map** - Visual calendar showing productivity levels for each day
+- **Monthly Goals Tracking** - Track progress towards monthly task completion goals
+- **Comparison Metrics** - Compare current month performance with previous months
+- **Export Capabilities** - Export monthly reports and statistics for external analysis
+
+#### Enhanced Calendar Features
+```typescript
+// Calendar navigation and state management
+currentDate: Date
+selectedDate: Date | null
+calendarView: 'month' | 'week' | 'day'
+navigateToDate(date: Date): void
+navigateToMonth(month: number, year: number): void
+navigateToToday(): void
+
+// Task visualization utilities
+getTasksForDate(date: Date): Task[]
+getTaskCountForDate(date: Date): number
+getTaskDensityLevel(date: Date): 'low' | 'medium' | 'high'
+isDateOverdue(date: Date): boolean
+getMonthlyTaskStatistics(month: number, year: number): MonthlyStats
+
+// Calendar integration with task management
+createTaskForDate(date: Date): void
+filterCalendarByCategory(categoryId: string): void
+filterCalendarByPriority(priority: Priority): void
+```
+
+### �📋 Task Detail Modal System
 
 #### TaskDetailModal Component
 The new `TaskDetailModal` provides a comprehensive task management interface:
@@ -610,14 +707,22 @@ For major changes, please open an issue first to discuss what you would like to 
 
 ## 🗓️ Roadmap
 
-### Upcoming Features (v1.1.0)
-- **📱 Mobile Responsiveness** - Enhanced touch interface and mobile optimization
+### Upcoming Features (v1.3.0)
+- **📱 Enhanced Mobile Experience** - Native mobile app features and touch gestures
 - **🔄 Data Sync** - Optional cloud synchronization across devices
 - **📋 Task Templates** - Reusable task templates for common workflows
-- **📈 Analytics Dashboard** - Productivity insights and completion statistics
-- **🎨 Theme Customization** - Custom color themes and layout options
-- **🔍 Advanced Search** - Filter by date ranges, tags, and task hierarchy
-- **⚡ Keyboard Navigation** - Full keyboard support for power users
+- **📈 Advanced Analytics** - Enhanced productivity insights and detailed reporting
+- **🎨 Theme Customization** - Custom color themes and layout personalization
+- **🔍 Enhanced Search** - Advanced search with filters, operators, and saved searches
+- **⚡ Advanced Keyboard Navigation** - Enhanced keyboard shortcuts and accessibility
+- **🔔 Smart Notifications** - Context-aware reminders and deadline alerts
+
+### Recently Completed (v1.2.0)
+- **✅ Modern Calendar View** - Month view calendar with task visualization
+- **✅ Daily Task Management** - Dedicated day view modal for focused productivity
+- **✅ Monthly Analytics Dashboard** - Comprehensive statistics and progress tracking
+- **✅ Calendar Task Creation** - Quick task creation from calendar dates
+- **✅ Enhanced UI/UX** - Improved interface elements and visual feedback
 
 ### Future Enhancements (v1.2.0+)
 - **🔗 Integrations** - Calendar sync (Google Calendar, Outlook)

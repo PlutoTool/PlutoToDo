@@ -207,17 +207,14 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   updateTask: async (id, updates) => {
     try {
       set({ loading: true, error: null });
+      console.log('TaskStore: updateTask called with:', { id, updates });
+      
       const updatedTask = await invoke<Task>('update_task', { 
         id, 
-        title: updates.title,
-        description: updates.description,
-        completed: updates.completed,
-        priority: updates.priority,
-        due_date: updates.due_date,
-        category_id: updates.category_id,
-        tags: updates.tags,
-        parent_id: updates.parent_id,
+        request: updates,
       });
+      
+      console.log('TaskStore: Received updated task from backend:', updatedTask);
       
       // Update task and re-sort
       const currentTasks = get().tasks;

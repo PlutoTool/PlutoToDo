@@ -33,6 +33,7 @@ interface DatePickerProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  zIndex?: string;
 }
 
 export const DatePicker: React.FC<DatePickerProps> = ({
@@ -40,7 +41,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   onChange,
   placeholder = "Select date...",
   disabled = false,
-  className
+  className,
+  zIndex = "z-50"
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(
@@ -148,7 +150,10 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       
       <Popover.Portal>
         <Popover.Content
-          className="z-50 w-auto p-0 bg-background border-2 border-border rounded-lg shadow-2xl animate-in fade-in-0 zoom-in-95 backdrop-blur-sm max-h-[400px] max-w-[300px] overflow-y-auto"
+          className={cn(
+            "w-auto p-0 bg-background border-2 border-border rounded-lg shadow-2xl animate-in fade-in-0 zoom-in-95 backdrop-blur-sm max-h-[400px] max-w-[300px] overflow-y-auto",
+            zIndex
+          )}
           sideOffset={6}
           align="start"
           alignOffset={-10}

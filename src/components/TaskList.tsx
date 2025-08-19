@@ -76,16 +76,71 @@ export const TaskList: React.FC<TaskListProps> = ({
 
   if (error) {
     return (
-      <div className="text-center py-8">
-        <p className="text-sm text-destructive">Error loading tasks: {error}</p>
-      </div>
-    );
-  }
-
-  if (tasks.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-sm text-muted-foreground">No tasks yet. Create your first task!</p>
+      <div className="space-y-4">
+        {/* View Mode Toggle - Always show */}
+        <div className="flex items-center justify-end">
+          <div className="flex items-center border rounded-lg p-1">
+            <Button
+              variant={localViewMode === 'cards' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => handleViewModeChange('cards')}
+              className={cn(
+                "h-8 px-3 text-xs",
+                localViewMode === 'cards' 
+                  ? "bg-primary text-primary-foreground shadow-sm" 
+                  : "hover:bg-muted"
+              )}
+            >
+              <LayoutGrid className="w-3 h-3 mr-1" />
+              Cards
+            </Button>
+            <Button
+              variant={localViewMode === 'table' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => handleViewModeChange('table')}
+              className={cn(
+                "h-8 px-3 text-xs",
+                localViewMode === 'table' 
+                  ? "bg-primary text-primary-foreground shadow-sm" 
+                  : "hover:bg-muted"
+              )}
+            >
+              <List className="w-3 h-3 mr-1" />
+              Table
+            </Button>
+            <Button
+              variant={localViewMode === 'hierarchy' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => handleViewModeChange('hierarchy')}
+              className={cn(
+                "h-8 px-3 text-xs",
+                localViewMode === 'hierarchy' 
+                  ? "bg-primary text-primary-foreground shadow-sm" 
+                  : "hover:bg-muted"
+              )}
+            >
+              <TreePine className="w-3 h-3 mr-1" />
+              Hierarchy
+            </Button>
+            <Button
+              variant={localViewMode === 'calendar' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => handleViewModeChange('calendar')}
+              className={cn(
+                "h-8 px-3 text-xs",
+                localViewMode === 'calendar' 
+                  ? "bg-primary text-primary-foreground shadow-sm" 
+                  : "hover:bg-muted"
+              )}
+            >
+              <Calendar className="w-3 h-3 mr-1" />
+              Calendar
+            </Button>
+          </div>
+        </div>
+        <div className="text-center py-8">
+          <p className="text-sm text-destructive">Error loading tasks: {error}</p>
+        </div>
       </div>
     );
   }
@@ -101,7 +156,7 @@ export const TaskList: React.FC<TaskListProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* View Mode Toggle */}
+      {/* View Mode Toggle - Always show */}
       <div className="flex items-center justify-end">
         <div className="flex items-center border rounded-lg p-1">
           <Button
@@ -166,12 +221,17 @@ export const TaskList: React.FC<TaskListProps> = ({
       {/* Task Content */}
       {localViewMode === 'calendar' ? (
         <CalendarView 
+          tasks={tasks}
           onEditTask={onEditTask}
           onDeleteTask={onDeleteTask}
           onAddSubtask={(parentTask) => onAddSubtask?.(parentTask.id)}
           selectedTasks={selectedTasks}
           onToggleTaskSelect={onToggleTaskSelect}
         />
+      ) : tasks.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-sm text-muted-foreground">No tasks yet. Create your first task!</p>
+        </div>
       ) : localViewMode === 'hierarchy' ? (
         <div className="space-y-2">
           {rootTasks.map((task) => (
