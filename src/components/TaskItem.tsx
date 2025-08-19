@@ -17,6 +17,7 @@ interface TaskItemProps {
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
   onTaskClick?: (task: TaskType) => void;
+  isInsideModal?: boolean;
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({ 
@@ -25,7 +26,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onDelete, 
   isSelected = false, 
   onToggleSelect,
-  onTaskClick 
+  onTaskClick,
+  isInsideModal = false
 }) => {
   const { 
     toggleTaskCompletion, 
@@ -319,6 +321,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           title: subtask.title,
           depth: index // This could be calculated better with actual depth
         }))}
+        zIndex={isInsideModal ? 'z-[60]' : 'z-50'}
+        showBackdrop={!isInsideModal}
       />
 
       {/* Delete Task Options Modal for tasks with subtasks */}
@@ -329,6 +333,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         onDeleteAndPromoteSubtasks={handleDeleteAndPromoteSubtasks}
         taskTitle={deleteTaskOptions.taskTitle}
         subtaskCount={deleteTaskOptions.subtaskCount}
+        zIndex={isInsideModal ? 'z-[60]' : 'z-50'}
+        showBackdrop={!isInsideModal}
       />
     </>
   );

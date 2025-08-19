@@ -20,6 +20,7 @@ interface SubtaskItemProps {
   onToggleSelect?: (id: string) => void;
   selectedTasks?: Set<string>; // Add this to track all selected tasks
   onTaskClick?: (task: TaskType) => void;
+  isInsideModal?: boolean;
 }
 
 export const SubtaskItem: React.FC<SubtaskItemProps> = ({ 
@@ -31,7 +32,8 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
   isSelected = false, 
   onToggleSelect,
   selectedTasks, // Add this prop
-  onTaskClick
+  onTaskClick,
+  isInsideModal = false
 }) => {
   const { 
     toggleTaskCompletion, 
@@ -428,6 +430,7 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
                   onToggleSelect={onToggleSelect}
                   selectedTasks={selectedTasks}
                   onTaskClick={onTaskClick}
+                  isInsideModal={isInsideModal}
                 />
               ))
             )}
@@ -447,6 +450,8 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
           title: subtask.title,
           depth: index // This could be calculated better with actual depth
         }))}
+        zIndex={isInsideModal ? 'z-[60]' : 'z-50'}
+        showBackdrop={!isInsideModal}
       />
 
       {/* Delete Task Options Modal for tasks with subtasks */}
@@ -457,6 +462,8 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
         onDeleteAndPromoteSubtasks={handleDeleteAndPromoteSubtasks}
         taskTitle={deleteTaskOptions.taskTitle}
         subtaskCount={deleteTaskOptions.subtaskCount}
+        zIndex={isInsideModal ? 'z-[60]' : 'z-50'}
+        showBackdrop={!isInsideModal}
       />
     </>
   );

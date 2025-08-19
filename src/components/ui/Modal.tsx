@@ -10,6 +10,7 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showCloseButton?: boolean;
   zIndex?: string;
+  showBackdrop?: boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -20,6 +21,7 @@ export const Modal: React.FC<ModalProps> = ({
   size = 'md',
   showCloseButton = true,
   zIndex = 'z-50',
+  showBackdrop = true,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -65,7 +67,9 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div 
-      className={`fixed inset-0 ${zIndex} flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm`}
+      className={`fixed inset-0 ${zIndex} flex items-center justify-center p-4 ${
+        showBackdrop ? 'bg-black/50 backdrop-blur-sm' : 'backdrop-blur-sm'
+      }`}
       onClick={handleBackdropClick}
     >
       <div

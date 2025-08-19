@@ -18,6 +18,7 @@ import { TaskForm } from './TaskForm';
 import TaskDetailModal from './TaskDetailModal';
 import { DayViewModal } from './DayViewModal';
 import { MonthSummary } from './MonthSummary';
+import { SubtaskCompletionModal } from './SubtaskCompletionModal';
 import { useTaskStore } from '../stores/taskStore';
 import { useCategoryStore } from '../stores/categoryStore';
 import { Task, Priority } from '../types';
@@ -43,7 +44,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   selectedTasks = new Set(),
   onToggleTaskSelect
 }) => {
-  const { tasks, updateTask, toggleTaskCompletion } = useTaskStore();
+  const { 
+    tasks, 
+    updateTask, 
+    toggleTaskCompletion, 
+    getIncompleteSubtasks,
+    toggleTaskCompletionWithSubtasks
+  } = useTaskStore();
   const { categories } = useCategoryStore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -56,6 +63,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const [showDayView, setShowDayView] = useState(false);
   const [dayViewDate, setDayViewDate] = useState<Date | null>(null);
   const [fromDayView, setFromDayView] = useState(false); // Track if task form was opened from day view
+  
+  // Subtask completion modal state
+  const [showSubtaskModal, setShowSubtaskModal] = useState(false);
+  const [incompleteSubtasks, setIncompleteSubtasks] = useState<Task[]>([]);
+  const [currentTaskForModal, setCurrentTaskForModal] = useState<Task | null>(null);
+  
   const dragOverlay = useRef<HTMLDivElement>(null);
   const scrollPositionRef = useRef<number>(0);
 
@@ -210,9 +223,35 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const handleTaskToggleComplete = async (task: Task, event: React.MouseEvent) => {
     event.stopPropagation();
     try {
+      // Check if this task is being marked as complete and has incomplete subtasks
+      if (!task.completed) {
+        const hasSubtasks = tasks.some(t => t.parent_id === task.id);
+        if (hasSubtasks) {
+          const incomplete = await getIncompleteSubtasks(task.id);
+          if (incomplete.length > 0) {
+            // Show the modal to ask user what to do
+            setIncompleteSubtasks(incomplete);
+            setCurrentTaskForModal(task);
+            setShowSubtaskModal(true);
+            return; // Don't complete the task yet
+          }
+        }
+      }
+      
+      // If no incomplete subtasks or task is being marked as incomplete, proceed normally
       await toggleTaskCompletion(task.id);
     } catch (error) {
       console.error('Failed to toggle task completion:', error);
+    }
+  };
+
+  const handleSubtaskModalConfirm = async (markAllDone: boolean) => {
+    try {
+      if (currentTaskForModal) {
+        await toggleTaskCompletionWithSubtasks(currentTaskForModal.id, markAllDone);
+      }
+    } catch (error) {
+      console.error('Failed to toggle task completion with subtasks:', error);
     }
   };
 
@@ -620,6 +659,25 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             setSelectedTask(null);
           }}
           zIndex="z-[60]"
+        />
+      )}
+
+      {/* Subtask Completion Modal */}
+      {currentTaskForModal && (
+        <SubtaskCompletionModal
+          isOpen={showSubtaskModal}
+          onClose={() => {
+            setShowSubtaskModal(false);
+            setCurrentTaskForModal(null);
+          }}
+          onConfirm={handleSubtaskModalConfirm}
+          taskTitle={currentTaskForModal.title}
+          incompleteCount={incompleteSubtasks.length}
+          incompleteSubtasks={incompleteSubtasks.map((subtask, index) => ({
+            id: subtask.id,
+            title: subtask.title,
+            depth: index // This could be calculated better with actual depth
+          }))}
         />
       )}
     </div>

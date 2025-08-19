@@ -10,6 +10,8 @@ interface SubtaskCompletionModalProps {
   taskTitle: string;
   incompleteCount: number;
   incompleteSubtasks: Array<{ id: string; title: string; depth: number }>;
+  zIndex?: string;
+  showBackdrop?: boolean;
 }
 
 export const SubtaskCompletionModal: React.FC<SubtaskCompletionModalProps> = ({
@@ -18,7 +20,9 @@ export const SubtaskCompletionModal: React.FC<SubtaskCompletionModalProps> = ({
   onConfirm,
   taskTitle,
   incompleteCount,
-  incompleteSubtasks
+  incompleteSubtasks,
+  zIndex = 'z-50',
+  showBackdrop = true,
 }) => {
   const handleMarkParentOnly = () => {
     onConfirm(false);
@@ -35,8 +39,8 @@ export const SubtaskCompletionModal: React.FC<SubtaskCompletionModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Complete Task with Subtasks">
-      <div className="space-y-4">
+    <Modal isOpen={isOpen} onClose={onClose} title="Complete Task with Subtasks" zIndex={zIndex} showBackdrop={showBackdrop}>
+      <div className="p-6 space-y-4">
         {/* Warning message */}
         <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
           <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
@@ -97,7 +101,7 @@ export const SubtaskCompletionModal: React.FC<SubtaskCompletionModalProps> = ({
             className="w-full justify-start gap-2"
           >
             <CheckCircle2 className="w-4 h-4" />
-            Only mark parent task as done (leave subtasks unchanged)
+            Only mark parent task as done
           </Button>
           
           <Button

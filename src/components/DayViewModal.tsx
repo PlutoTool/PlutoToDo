@@ -98,6 +98,7 @@ export const DayViewModal: React.FC<DayViewModalProps> = ({
                   onTaskClick={onTaskClick}
                   isSelected={selectedTasks.has(task.id)}
                   onToggleSelect={onToggleTaskSelect}
+                  isInsideModal={true}
                 />
               ))
             }

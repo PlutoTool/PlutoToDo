@@ -10,6 +10,8 @@ interface DeleteTaskOptionsModalProps {
   onDeleteAndPromoteSubtasks: () => void;
   taskTitle: string;
   subtaskCount: number;
+  zIndex?: string;
+  showBackdrop?: boolean;
 }
 
 export const DeleteTaskOptionsModal: React.FC<DeleteTaskOptionsModalProps> = ({
@@ -19,9 +21,11 @@ export const DeleteTaskOptionsModal: React.FC<DeleteTaskOptionsModalProps> = ({
   onDeleteAndPromoteSubtasks,
   taskTitle,
   subtaskCount,
+  zIndex = 'z-50',
+  showBackdrop = true,
 }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Delete Task with Subtasks" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Delete Task with Subtasks" size="md" zIndex={zIndex} showBackdrop={showBackdrop}>
       <div className="p-6 space-y-6">
         {/* Warning Message */}
         <div className="flex items-start gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
