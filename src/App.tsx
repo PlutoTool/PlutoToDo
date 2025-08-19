@@ -581,7 +581,7 @@ function App() {
         {/* Content Area */}
         <main className="flex-1 overflow-hidden">
           <div className="h-full overflow-auto">
-            <div className="max-w-4xl mx-auto p-6">
+            <div className="max-w-7xl mx-auto p-6">
 
               <TaskList 
                 onEditTask={handleEditTask}

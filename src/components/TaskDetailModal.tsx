@@ -32,6 +32,7 @@ interface TaskDetailModalProps {
   onClose: () => void;
   onSubtaskClick?: (subtask: Task) => void;
   onParentClick?: (parentTask: Task) => void;
+  zIndex?: string;
 }
 
 export default function TaskDetailModal({
@@ -39,7 +40,8 @@ export default function TaskDetailModal({
   isOpen,
   onClose,
   onSubtaskClick,
-  onParentClick
+  onParentClick,
+  zIndex = 'z-50'
 }: TaskDetailModalProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [showSubtaskForm, setShowSubtaskForm] = useState(false);
@@ -206,6 +208,7 @@ export default function TaskDetailModal({
         onClose={handleEditCancel}
         title="Edit Task"
         size="lg"
+        zIndex={zIndex}
       >
         <TaskForm
           task={currentTask}
@@ -223,6 +226,7 @@ export default function TaskDetailModal({
         onClose={handleSubtaskCancel}
         title="Add Subtask"
         size="lg"
+        zIndex={zIndex}
       >
         <TaskForm
           parentId={currentTask.id}
@@ -240,6 +244,7 @@ export default function TaskDetailModal({
         onClose={onClose}
         title={parentTask ? `Subtask Details - ${parentTask.title}` : (currentTask.completed ? "Task Details - Completed" : "Task Details")}
         size="lg"
+        zIndex={zIndex}
       >
       <div className="p-6 space-y-6">
         {/* Back to Parent Navigation */}

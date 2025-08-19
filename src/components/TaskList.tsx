@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { TaskItem } from './TaskItem';
 import { SubtaskItem } from './SubtaskItem';
 import { TaskTable } from './TaskTable';
+import { CalendarView } from './CalendarView';
 import TaskDetailModal from './TaskDetailModal';
 import { Task } from '../types';
 import { useTaskStore } from '../stores/taskStore';
-import { Loader2, LayoutGrid, List, TreePine } from 'lucide-react';
+import { Loader2, LayoutGrid, List, TreePine, Calendar } from 'lucide-react';
 import { Button } from './ui/Button';
 import { cn } from '../utils/cn';
 
@@ -17,7 +18,7 @@ interface TaskListProps {
   onToggleTaskSelect?: (id: string) => void;
 }
 
-type ViewMode = 'cards' | 'table' | 'hierarchy';
+type ViewMode = 'cards' | 'table' | 'hierarchy' | 'calendar';
 
 export const TaskList: React.FC<TaskListProps> = ({ 
   onEditTask, 
@@ -145,11 +146,33 @@ export const TaskList: React.FC<TaskListProps> = ({
             <TreePine className="w-3 h-3 mr-1" />
             Hierarchy
           </Button>
+          <Button
+            variant={localViewMode === 'calendar' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => handleViewModeChange('calendar')}
+            className={cn(
+              "h-8 px-3 text-xs",
+              localViewMode === 'calendar' 
+                ? "bg-primary text-primary-foreground shadow-sm" 
+                : "hover:bg-muted"
+            )}
+          >
+            <Calendar className="w-3 h-3 mr-1" />
+            Calendar
+          </Button>
         </div>
       </div>
 
       {/* Task Content */}
-      {localViewMode === 'hierarchy' ? (
+      {localViewMode === 'calendar' ? (
+        <CalendarView 
+          onEditTask={onEditTask}
+          onDeleteTask={onDeleteTask}
+          onAddSubtask={(parentTask) => onAddSubtask?.(parentTask.id)}
+          selectedTasks={selectedTasks}
+          onToggleTaskSelect={onToggleTaskSelect}
+        />
+      ) : localViewMode === 'hierarchy' ? (
         <div className="space-y-2">
           {rootTasks.map((task) => (
             <div key={task.id} className="group">
