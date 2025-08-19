@@ -132,7 +132,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         return true;
       })
     }));
-  }, [currentDate, tasks]);
+  }, [currentDate, tasks, showCompletedTasks]);
 
   // Navigation handlers
   const goToPreviousMonth = () => setCurrentDate(prev => subMonths(prev, 1));
@@ -587,7 +587,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           tasks={tasks.filter(task => {
             if (!task.due_date) return false;
             const taskDate = parseISO(task.due_date);
-            return isSameDay(taskDate, dayViewDate);
+            const isTaskOnDate = isSameDay(taskDate, dayViewDate);
+            if (!isTaskOnDate) return false;
+            // Filter completed tasks if toggle is off
+            if (!showCompletedTasks && task.completed) return false;
+            return true;
           })}
           onEditTask={onEditTask}
           onDeleteTask={onDeleteTask}
